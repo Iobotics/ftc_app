@@ -54,6 +54,7 @@ public class FtcOpModeRegister implements OpModeRegister {
      *
      * If two or more op modes are registered with the same name, the app will display an error.
      */
+    manager.register("SuperK9TeleOp", SuperK9TeleOp.class);
 
     manager.register("NullOp", NullOp.class);
 
@@ -66,7 +67,7 @@ public class FtcOpModeRegister implements OpModeRegister {
      * Uncomment any of the following lines if you want to register an op mode.
      */
 
-    //manager.register("AdafruitRGBExample", AdafruitRGBExample.class);
+    manager.register("AdafruitRGBExample", AdafruitRGBExample.class);
     //manager.register("ColorSensorDriver", ColorSensorDriver.class);
 
     //manager.register("IrSeekerOp", IrSeekerOp.class);
