@@ -56,17 +56,22 @@ public class SuperK9Auto extends SuperK9Base {
 
     boolean _running = false;
 
-    private enum STATES {
+    private enum States {
         RESET_ENCODERS,
         DRIVE_FORWARD,
         STOP
     }
 
-    private STATES _state;
+    private States _state;
+
+    @Override
+    protected void k9Init() {
+        this.setHasRearEncoders(true);
+    }
 
     @Override
     protected void k9Start() {
-        _state = STATES.RESET_ENCODERS;
+        _state = States.RESET_ENCODERS;
     }
 
     @Override
@@ -74,17 +79,17 @@ public class SuperK9Auto extends SuperK9Base {
 
         switch(_state) {
             case RESET_ENCODERS:
-                this.setPower(0, 0);
                 this.resetEncoders();
-                if(this.getLeftEncoder() == 0 && this.getRightEncoder() == 0) {
-                    _state = STATES.DRIVE_FORWARD;
+                this.setPower(0, 0);
+                if(this.areEncodersReset()) {
+                    _state = States.DRIVE_FORWARD;
                 }
                 break;
             case DRIVE_FORWARD:
                 this.runWithEncoders();
                 this.setPower(RUN_POWER, RUN_POWER);
                 if(this.getLeftPositionInches() > TARGET_DISTANCE && this.getRightPositionInches() > TARGET_DISTANCE) {
-                    _state = STATES.STOP;
+                    _state = States.STOP;
                     this.setPower(0, 0);
                 }
                 break;

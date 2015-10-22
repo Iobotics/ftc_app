@@ -53,19 +53,35 @@ import com.qualcomm.robotcore.util.Range;
  */
 public abstract class SuperK9Base extends OpMode {
 
-	//final static int LED_CHANNEL = 5;
-	//final static boolean LED_ENABLED = false;
-
+    // dead reckonining information //
 	final static int    ENCODER_TICKS_PER_REV = 1120; // Neverest 40
-	final static int    WHEEL_DIAMETER        = 6; // inches / REV
+	final static int    WHEEL_DIAMETER        = 6;    // inches / REV
 	final static double INCHES_PER_TICK       = (WHEEL_DIAMETER * Math.PI) / ENCODER_TICKS_PER_REV;
 
-	final static int LED_CHANNEL = 5;
-
+    // servo position information //
     final static double SERVO_POS_LEFT   = 0.0;
     final static double SERVO_POS_CENTER = 0.5;
     final static double SERVO_POS_RIGHT  = 1.0;
 
+    protected enum ServoPosition {
+        LEFT,
+        CENTER,
+        RIGHT
+    }
+
+    // color sensor information //
+    final static int COLOR_LED_CHANNEL = 5;
+
+    final static double HUE_THRESHOLD_RED  = 25.0;
+    final static double HUE_THRESHOLD_BLUE = 200.0;
+
+    protected enum FtcColor {
+        RED,
+        BLUE,
+        UNKNOWN
+    }
+
+    // hardware instances //
 	DcMotor _motorRightFront;
 	DcMotor _motorRightRear;
 	DcMotor _motorLeftFront;
@@ -78,11 +94,7 @@ public abstract class SuperK9Base extends OpMode {
 	OpticalDistanceSensor _sensorODS;
 	LightSensor _sensorLego;
 
-    protected enum ServoPosition {
-        LEFT,
-        CENTER,
-        RIGHT
-    }
+    boolean _hasRearEncoders = false;
 
 	/*
 	 * Code to run when the op mode is initialized goes here
@@ -101,7 +113,7 @@ public abstract class SuperK9Base extends OpMode {
 
 		_cdim = hardwareMap.deviceInterfaceModule.get("dim");
 		_sensorRGB = hardwareMap.colorSensor.get("color");
-		_cdim.setDigitalChannelMode(LED_CHANNEL, DigitalChannelController.Mode.OUTPUT);
+		_cdim.setDigitalChannelMode(COLOR_LED_CHANNEL, DigitalChannelController.Mode.OUTPUT);
 		this.setColorSensorLED(false);
 
 		_sensorODS = hardwareMap.opticalDistanceSensor.get("ods");
@@ -142,7 +154,7 @@ public abstract class SuperK9Base extends OpMode {
 		 */
         telemetry.addData("left encoder", String.format("%.2f", this.getLeftPositionInches()));
         telemetry.addData("right encoder", String.format("%.2f", this.getRightPositionInches()));
-        telemetry.addData("Hue", String.format("%.2f", this.getColorSensorHue()));
+        telemetry.addData("Color (Hue)", String.format("%s (%.2f)", this.getColorSensor(), this.getColorSensorHue()));
         telemetry.addData("ODS", String.format("%.2f", this.getODSLight()));
         telemetry.addData("Lego", String.format("%.2f", this.getLegoLight()));
     }
@@ -184,6 +196,14 @@ public abstract class SuperK9Base extends OpMode {
         _motorLeftRear.setPower(leftPower);
     }
 
+    protected boolean hasRearEncoders() {
+        return _hasRearEncoders;
+    }
+
+    protected void setHasRearEncoders(boolean has) {
+        _hasRearEncoders = has;
+    }
+
     protected int getLeftEncoder() {
         return _motorLeftFront.getCurrentPosition();
     }
@@ -201,18 +221,19 @@ public abstract class SuperK9Base extends OpMode {
     }
 
     protected void resetEncoders() {
-        _motorLeftFront.setChannelMode(DcMotorController.RunMode.RESET_ENCODERS);
-        _motorRightFront.setChannelMode(DcMotorController.RunMode.RESET_ENCODERS);
+        this.setEncoderMode(DcMotorController.RunMode.RESET_ENCODERS);
     }
 
     protected void runWithEncoders() {
-        _motorLeftFront.setChannelMode(DcMotorController.RunMode.RUN_USING_ENCODERS);
-        _motorRightFront.setChannelMode(DcMotorController.RunMode.RUN_USING_ENCODERS);
+        this.setEncoderMode(DcMotorController.RunMode.RUN_USING_ENCODERS);
     }
 
     protected void runWithoutEncoders() {
-        _motorLeftFront.setChannelMode(DcMotorController.RunMode.RUN_WITHOUT_ENCODERS);
-        _motorRightFront.setChannelMode(DcMotorController.RunMode.RUN_WITHOUT_ENCODERS);
+        this.setEncoderMode(DcMotorController.RunMode.RUN_WITHOUT_ENCODERS);
+    }
+
+    protected boolean areEncodersReset() {
+        return this.getLeftEncoder() == 0 && this.getRightEncoder() == 0;
     }
 
     protected ServoPosition getServoPosition() {
@@ -243,12 +264,17 @@ public abstract class SuperK9Base extends OpMode {
         return hsvValues[0];
     }
 
+    protected FtcColor getColorSensor() {
+        float hue = this.getColorSensorHue();
+        return hue <= HUE_THRESHOLD_RED? FtcColor.RED: hue >= HUE_THRESHOLD_BLUE? FtcColor.BLUE: FtcColor.UNKNOWN;
+    }
+
     protected boolean getColorSensorLED() {
-        return _cdim.getDigitalChannelState(LED_CHANNEL);
+        return _cdim.getDigitalChannelState(COLOR_LED_CHANNEL);
     }
 
     protected void setColorSensorLED(boolean enabled) {
-        _cdim.setDigitalChannelState(LED_CHANNEL, enabled);
+        _cdim.setDigitalChannelState(COLOR_LED_CHANNEL, enabled);
     }
 
     protected double getODSLight() {
@@ -257,6 +283,16 @@ public abstract class SuperK9Base extends OpMode {
 
     protected double getLegoLight() {
         return _sensorLego.getLightDetected();
+    }
+
+    private void setEncoderMode(DcMotorController.RunMode mode) {
+        _motorLeftFront.setChannelMode(mode);
+        _motorRightFront.setChannelMode(mode);
+
+        if(this.hasRearEncoders()) {
+            _motorLeftRear.setChannelMode(mode);
+            _motorRightRear.setChannelMode(mode);
+        }
     }
 
 	private double scaleInput(double dVal)  {
