@@ -34,57 +34,63 @@ package com.qualcomm.ftcrobotcontroller.opmodes;
 import android.graphics.Color;
 
 import com.qualcomm.robotcore.eventloop.opmode.OpMode;
-import com.qualcomm.robotcore.hardware.DigitalChannelController;
 import com.qualcomm.robotcore.hardware.ColorSensor;
 import com.qualcomm.robotcore.hardware.DcMotor;
 import com.qualcomm.robotcore.hardware.DeviceInterfaceModule;
+import com.qualcomm.robotcore.hardware.DigitalChannelController;
 import com.qualcomm.robotcore.hardware.LightSensor;
 import com.qualcomm.robotcore.hardware.OpticalDistanceSensor;
-//import com.qualcomm.robotcore.hardware.Servo;
-import com.qualcomm.robotcore.hardware.DcMotorController;
 import com.qualcomm.robotcore.util.Range;
 
-import java.lang.Math;
+//import com.qualcomm.robotcore.hardware.Servo;
 
 /**
  * TeleOp Mode
  * <p>
  * Enables control of the robot via the gamepad
  */
-public class SuperK9TeleOp extends SuperK9Base {
+public class SuperK9Auto extends SuperK9Base {
 
-	/*
-	 * Autonomous program
-	 *
-	 * Move forward 2 feet
-	 */
-	@Override
-	public void k9Start() {
-		this.runWithoutEncoders();
-	}
+    private static final double RUN_POWER = 0.25;
+    private static final double TARGET_DISTANCE = 48;
 
-	/*
-	 * This method will be called repeatedly in a loop
-	 *
-	 * @see com.qualcomm.robotcore.eventloop.opmode.OpMode#run()
-	 */
-	@Override
-	public void k9Loop() {
-		// throttle: left_stick_y ranges from -1 to 1, where -1 is full up, and
-		// 1 is full down
-		// direction: left_stick_x ranges from -1 to 1, where -1 is full left
-		// and 1 is full right
-		/* float throttle = -gamepad1.left_stick_y;
-		float direction = gamepad1.left_stick_x;
-		float right = throttle - direction;
-		float left = throttle + direction; */
-		float left = -gamepad1.left_stick_y;
-		float right = -gamepad1.right_stick_y;
-		this.setPowerScaled(left, right);
+    boolean _running = false;
 
-        ServoPosition pos = gamepad1.dpad_left? ServoPosition.LEFT: gamepad1.dpad_right? ServoPosition.RIGHT: ServoPosition.CENTER;
-        this.setServoPosition(pos);
+    private enum STATES {
+        RESET_ENCODERS,
+        DRIVE_FORWARD,
+        STOP
+    }
 
-        this.setColorSensorLED(gamepad1.b);
-	}
+    private STATES _state;
+
+    @Override
+    protected void k9Start() {
+        _state = STATES.RESET_ENCODERS;
+    }
+
+    @Override
+    protected void k9Loop() {
+
+        switch(_state) {
+            case RESET_ENCODERS:
+                this.setPower(0, 0);
+                this.resetEncoders();
+                if(this.getLeftEncoder() == 0 && this.getRightEncoder() == 0) {
+                    _state = STATES.DRIVE_FORWARD;
+                }
+                break;
+            case DRIVE_FORWARD:
+                this.runWithEncoders();
+                this.setPower(RUN_POWER, RUN_POWER);
+                if(this.getLeftPositionInches() > TARGET_DISTANCE && this.getRightPositionInches() > TARGET_DISTANCE) {
+                    _state = STATES.STOP;
+                    this.setPower(0, 0);
+                }
+                break;
+            case STOP:
+                break;
+        }
+
+    }
 }
