@@ -51,18 +51,19 @@ import com.qualcomm.robotcore.util.Range;
  */
 public class SuperK9Auto extends SuperK9Base {
 
-    private static final double RUN_POWER = 0.25;
+    private static final double RUN_POWER  = 0.25;
+    private static final double TURN_POWER = 0.25;
     private static final double TARGET_DISTANCE = 48;
-
-    boolean _running = false;
 
     private enum States {
         RESET_ENCODERS,
         DRIVE_FORWARD,
+        TURN_RIGHT,
         STOP
     }
 
     private States _state;
+    private double _targetDistance;
 
     @Override
     protected void k9Init() {
@@ -82,17 +83,25 @@ public class SuperK9Auto extends SuperK9Base {
                 this.resetEncoders();
                 this.setPower(0, 0);
                 if(this.areEncodersReset()) {
+                    _targetDistance = TARGET_DISTANCE;
                     _state = States.DRIVE_FORWARD;
                 }
                 break;
             case DRIVE_FORWARD:
                 this.runWithEncoders();
                 this.setPower(RUN_POWER, RUN_POWER);
-                if(this.getLeftPositionInches() > TARGET_DISTANCE && this.getRightPositionInches() > TARGET_DISTANCE) {
+                if(this.getLeftPositionInches() >= _targetDistance && this.getRightPositionInches() >= _targetDistance) {
                     _state = States.STOP;
                     this.setPower(0, 0);
                 }
                 break;
+            case TURN_RIGHT:
+                this.runWithEncoders();
+                this.setPower(TURN_POWER, -TURN_POWER);
+                if(this.getLeftPositionInches() > _targetDistance && this.getRightPositionInches() <= _targetDistance) {
+                    _state = States.STOP;
+                    this.setPower(0, 0);
+                }
             case STOP:
                 break;
         }
