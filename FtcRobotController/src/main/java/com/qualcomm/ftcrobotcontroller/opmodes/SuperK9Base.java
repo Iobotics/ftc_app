@@ -95,6 +95,8 @@ public abstract class SuperK9Base extends OpMode {
 	LightSensor _sensorLego;
 
     boolean _hasRearEncoders = false;
+    int _leftEncoderOffset  = 0;
+    int _rightEncoderOffset = 0;
 
 	/*
 	 * Code to run when the op mode is initialized goes here
@@ -205,7 +207,8 @@ public abstract class SuperK9Base extends OpMode {
     }
 
     protected int getLeftEncoder() {
-        return _motorLeftFront.getCurrentPosition();
+        //return _motorLeftFront.getCurrentPosition();
+        return _motorLeftFront.getCurrentPosition() - _leftEncoderOffset;
     }
 
     protected double getLeftPositionInches() {
@@ -213,7 +216,8 @@ public abstract class SuperK9Base extends OpMode {
     }
 
     protected int getRightEncoder() {
-        return _motorRightFront.getCurrentPosition();
+        //return _motorRightFront.getCurrentPosition();
+        return _motorRightFront.getCurrentPosition() - _rightEncoderOffset;
     }
 
     protected double getRightPositionInches() {
@@ -221,7 +225,13 @@ public abstract class SuperK9Base extends OpMode {
     }
 
     protected void resetEncoders() {
-        this.setEncoderMode(DcMotorController.RunMode.RESET_ENCODERS);
+        //this.setEncoderMode(DcMotorController.RunMode.RESET_ENCODERS);
+        _leftEncoderOffset  = this.getLeftEncoder();
+        _rightEncoderOffset = this.getRightEncoder();
+    }
+
+    protected boolean areEncodersReset() {
+        return this.getLeftEncoder() == 0 && this.getRightEncoder() == 0;
     }
 
     protected void runWithEncoders() {
@@ -230,10 +240,6 @@ public abstract class SuperK9Base extends OpMode {
 
     protected void runWithoutEncoders() {
         this.setEncoderMode(DcMotorController.RunMode.RUN_WITHOUT_ENCODERS);
-    }
-
-    protected boolean areEncodersReset() {
-        return this.getLeftEncoder() == 0 && this.getRightEncoder() == 0;
     }
 
     protected ServoPosition getServoPosition() {
@@ -307,7 +313,7 @@ public abstract class SuperK9Base extends OpMode {
 			index = 16;
 		}
 
-		double dScale = 0.0;
+		double dScale;
 		if (dVal < 0) {
 			dScale = -scaleArray[index];
 		} else {
