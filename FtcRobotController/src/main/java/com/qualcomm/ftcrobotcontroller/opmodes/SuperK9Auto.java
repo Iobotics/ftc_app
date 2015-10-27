@@ -40,6 +40,7 @@ import com.qualcomm.robotcore.hardware.DeviceInterfaceModule;
 import com.qualcomm.robotcore.hardware.DigitalChannelController;
 import com.qualcomm.robotcore.hardware.LightSensor;
 import com.qualcomm.robotcore.hardware.OpticalDistanceSensor;
+import com.qualcomm.robotcore.util.ElapsedTime;
 import com.qualcomm.robotcore.util.Range;
 
 //import com.qualcomm.robotcore.hardware.Servo;
@@ -52,57 +53,161 @@ import com.qualcomm.robotcore.util.Range;
 public class SuperK9Auto extends SuperK9Base {
 
     private static final double RUN_POWER  = 0.25;
-    private static final double TURN_POWER = 0.25;
-    private static final double TARGET_DISTANCE = 48;
+    private static final double TURN_POWER = 0.50;
 
     private enum States {
-        RESET_ENCODERS,
+        START,
         DRIVE_FORWARD,
         TURN_RIGHT,
+        DRIVE_FORWARD2,
+        WAIT_FOR_TIME,
+        DEPLOY_MAN,
+        RESET_MAN,
+        DRIVE_REVERSE,
+        SET_BUTTON_PUSHER,
+        DRIVE_FORWARD3,
+        DRIVE_REVERSE2,
         STOP
     }
 
     private States _state;
-    private double _targetDistance;
+    private States _nextState;
+    private double _targetValue;
+    private double _nextTarget;
+    private final ElapsedTime _time = new ElapsedTime();
+    private FtcColor _color;
 
     @Override
-    protected void k9Init() {
-        this.setHasRearEncoders(true);
-    }
+    protected void k9Init() { }
 
     @Override
     protected void k9Start() {
-        _state = States.RESET_ENCODERS;
+        _state = States.START;
+        _time.reset();
     }
 
     @Override
     protected void k9Loop() {
-
+        telemetry.addData("State", _state.name());
         switch(_state) {
-            case RESET_ENCODERS:
+            case START:
                 this.resetEncoders();
                 this.setPower(0, 0);
-                if(this.areEncodersReset()) {
-                    _targetDistance = TARGET_DISTANCE;
-                    _state = States.DRIVE_FORWARD;
-                }
+
+                _state = States.DRIVE_FORWARD;
+                _targetValue = 86.5;
                 break;
             case DRIVE_FORWARD:
                 this.runWithEncoders();
                 this.setPower(RUN_POWER, RUN_POWER);
-                if(this.getLeftPositionInches() >= _targetDistance && this.getRightPositionInches() >= _targetDistance) {
-                    _state = States.STOP;
+                if(this.getLeftPositionInches() >= _targetValue && this.getRightPositionInches() >= _targetValue) {
                     this.setPower(0, 0);
+                    this.resetEncoders();
+
+                    // wait for 1 second, the turn //
+                    _state = States.WAIT_FOR_TIME;
+                    _targetValue = _time.time() + 1;
+                    _nextState   = States.TURN_RIGHT;
+                    _nextTarget  = 15;
                 }
                 break;
             case TURN_RIGHT:
                 this.runWithEncoders();
-                this.setPower(TURN_POWER, -TURN_POWER);
-                if(this.getLeftPositionInches() > _targetDistance && this.getRightPositionInches() <= _targetDistance) {
-                    _state = States.STOP;
+                this.setPower(TURN_POWER, 0);
+                if(this.getLeftPositionInches() > _targetValue) {
                     this.setPower(0, 0);
+                    this.resetEncoders();
+
+                    // wait for 1 second, deploy man //
+                    _state = States.WAIT_FOR_TIME;
+                    _targetValue = _time.time() + 1;
+                    _nextState   = States.DRIVE_FORWARD2;
+                    _nextTarget  = 5;
                 }
+                break;
+            case DRIVE_FORWARD2:
+                this.runWithEncoders();
+                this.setPower(RUN_POWER, RUN_POWER);
+                if(this.getLeftPositionInches() >= _targetValue && this.getRightPositionInches() >= _targetValue) {
+                    this.setPower(0, 0);
+                    this.resetEncoders();
+
+                    // wait for 1 second, the turn //
+                    _state = States.WAIT_FOR_TIME;
+                    _targetValue = _time.time() + 1;
+                    _nextState   = States.DEPLOY_MAN;
+                }
+                break;
+            case DEPLOY_MAN:
+                this.setManServoPosition(ManServoPosition.DEPLOY);
+
+                // wait for 1 second, reset man //
+                _state = States.WAIT_FOR_TIME;
+                _targetValue = _time.time() + 2;
+                _nextState   = States.RESET_MAN;
+                break;
+            case RESET_MAN:
+                this.setManServoPosition(ManServoPosition.HOME);
+                _color = this.getColorSensor();
+
+                _state       = States.DRIVE_REVERSE;
+                _targetValue = 5;
+                break;
+            case DRIVE_REVERSE:
+                this.runWithEncoders();
+                this.setPower(-RUN_POWER, -RUN_POWER);
+                if(this.getLeftPositionInches() <= -_targetValue && this.getRightPositionInches() <= -_targetValue) {
+                    this.setPower(0, 0);
+                    this.resetEncoders();
+
+                    // wait for 1 second, the turn //
+                    _state = States.SET_BUTTON_PUSHER;
+                }
+                break;
+            case SET_BUTTON_PUSHER:
+                this.setButtonServoPosition(_color == FtcColor.RED? ButtonServoPosition.LEFT: ButtonServoPosition.RIGHT);
+
+                // wait for 1 second, reset man //
+                _state = States.WAIT_FOR_TIME;
+                _targetValue = _time.time() + 0.5;
+                _nextState   = States.DRIVE_FORWARD3;
+                _nextTarget  = 5;
+                break;
+            case DRIVE_FORWARD3:
+                this.runWithEncoders();
+                this.setPower(RUN_POWER, RUN_POWER);
+                if(this.getLeftPositionInches() >= _targetValue && this.getRightPositionInches() >= _targetValue) {
+                    this.setPower(0, 0);
+                    this.resetEncoders();
+
+                    _state = States.WAIT_FOR_TIME;
+                    _targetValue = _time.time() + 1;
+                    _nextState   = States.DRIVE_REVERSE2;
+                    _nextTarget  = 5;
+                }
+                break;
+            case DRIVE_REVERSE2:
+                this.runWithEncoders();
+                this.setPower(-RUN_POWER, -RUN_POWER);
+                if(this.getLeftPositionInches() <= -_targetValue && this.getRightPositionInches() <= -_targetValue) {
+                    this.setPower(0, 0);
+                    this.resetEncoders();
+
+                    _state = States.STOP;
+                }
+                break;
+
+            // Generic States //
+            case WAIT_FOR_TIME:
+                if(_time.time() >= _targetValue) {
+                    _state       = _nextState;
+                    _targetValue = _nextTarget;
+                }
+                break;
             case STOP:
+                this.resetEncoders();
+                this.setButtonServoPosition(ButtonServoPosition.CENTER);
+                //this.runWithoutEncoders();
                 break;
         }
 

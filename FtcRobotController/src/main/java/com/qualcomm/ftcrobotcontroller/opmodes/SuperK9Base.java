@@ -42,6 +42,7 @@ import com.qualcomm.robotcore.hardware.DigitalChannelController;
 import com.qualcomm.robotcore.hardware.LightSensor;
 import com.qualcomm.robotcore.hardware.OpticalDistanceSensor;
 import com.qualcomm.robotcore.hardware.Servo;
+import com.qualcomm.robotcore.hardware.configuration.Utility;
 import com.qualcomm.robotcore.util.Range;
 
 //import com.qualcomm.robotcore.hardware.Servo;
@@ -59,14 +60,22 @@ public abstract class SuperK9Base extends OpMode {
 	final static double INCHES_PER_TICK       = (WHEEL_DIAMETER * Math.PI) / ENCODER_TICKS_PER_REV;
 
     // servo position information //
-    final static double SERVO_POS_LEFT   = 0.0;
-    final static double SERVO_POS_CENTER = 0.5;
-    final static double SERVO_POS_RIGHT  = 1.0;
+    final static double BUTTON_SERVO_POS_LEFT   = 0.34;
+    final static double BUTTON_SERVO_POS_CENTER = 0.54;
+    final static double BUTTON_SERVO_POS_RIGHT  = 0.74;
 
-    protected enum ServoPosition {
+    protected enum ButtonServoPosition {
         LEFT,
         CENTER,
         RIGHT
+    }
+
+    final static double MAN_SERVO_POS_HOME   = 0.0;
+    final static double MAN_SERVO_POS_DEPLOY = 1.0;
+
+    protected enum ManServoPosition {
+        HOME,
+        DEPLOY
     }
 
     // color sensor information //
@@ -87,7 +96,8 @@ public abstract class SuperK9Base extends OpMode {
 	DcMotor _motorLeftFront;
 	DcMotor _motorLeftRear;
 
-    Servo _servo;
+    Servo _buttonServo;
+    Servo _manServo;
 
 	DeviceInterfaceModule _cdim;
 	ColorSensor _sensorRGB;
@@ -121,10 +131,14 @@ public abstract class SuperK9Base extends OpMode {
 		_sensorODS = hardwareMap.opticalDistanceSensor.get("ods");
 		_sensorLego = hardwareMap.lightSensor.get("light");
 
-        _servo = hardwareMap.servo.get("buttonServo");
-        _servo.setDirection(Servo.Direction.REVERSE);
-        this.setServoPosition(ServoPosition.CENTER);
+        _buttonServo = hardwareMap.servo.get("buttonServo");
+        _buttonServo.setDirection(Servo.Direction.REVERSE);
+        this.setButtonServoPosition(ButtonServoPosition.CENTER);
 
+        _manServo = hardwareMap.servo.get("manServo");
+        this.setManServoPosition(ManServoPosition.HOME);
+
+        this.setHasRearEncoders(true);
         this.k9Init();
 	}
 
@@ -207,7 +221,6 @@ public abstract class SuperK9Base extends OpMode {
     }
 
     protected int getLeftEncoder() {
-        //return _motorLeftFront.getCurrentPosition();
         return _motorLeftFront.getCurrentPosition() - _leftEncoderOffset;
     }
 
@@ -216,7 +229,6 @@ public abstract class SuperK9Base extends OpMode {
     }
 
     protected int getRightEncoder() {
-        //return _motorRightFront.getCurrentPosition();
         return _motorRightFront.getCurrentPosition() - _rightEncoderOffset;
     }
 
@@ -226,8 +238,8 @@ public abstract class SuperK9Base extends OpMode {
 
     protected void resetEncoders() {
         //this.setEncoderMode(DcMotorController.RunMode.RESET_ENCODERS);
-        _leftEncoderOffset  = this.getLeftEncoder();
-        _rightEncoderOffset = this.getRightEncoder();
+        _leftEncoderOffset  = _motorLeftFront.getCurrentPosition();
+        _rightEncoderOffset = _motorRightFront.getCurrentPosition();
     }
 
     protected boolean areEncodersReset() {
@@ -242,23 +254,57 @@ public abstract class SuperK9Base extends OpMode {
         this.setEncoderMode(DcMotorController.RunMode.RUN_WITHOUT_ENCODERS);
     }
 
-    protected ServoPosition getServoPosition() {
-        double pos = _servo.getPosition();
-        return  pos == SERVO_POS_LEFT? ServoPosition.LEFT:
-                pos == SERVO_POS_CENTER? ServoPosition.CENTER:
-                        ServoPosition.RIGHT;
+    protected void runToPosition(double leftInches, double rightInches, double power) {
+        int leftTicks  = (int) ((leftInches  + _leftEncoderOffset)  / INCHES_PER_TICK);
+        int rightTicks = (int) ((rightInches + _rightEncoderOffset) / INCHES_PER_TICK);
+
+        this.setEncoderMode(DcMotorController.RunMode.RUN_TO_POSITION);
+        _motorLeftFront.setTargetPosition(leftTicks);
+        _motorRightFront.setTargetPosition(rightTicks);
+        if(this.hasRearEncoders()) {
+            _motorLeftRear.setTargetPosition(leftTicks);
+            _motorRightRear.setTargetPosition(rightTicks);
+        }
+        this.setPower(this.sign(leftInches) * power, this.sign(rightInches) * power);
     }
 
-    protected void setServoPosition(ServoPosition pos) {
+    protected boolean isRunning() {
+        return _motorLeftFront.isBusy() || _motorRightFront.isBusy();
+    }
+
+    protected ButtonServoPosition getButtonServoPosition() {
+        double pos = _buttonServo.getPosition();
+        return  pos == BUTTON_SERVO_POS_LEFT? ButtonServoPosition.LEFT:
+                pos == BUTTON_SERVO_POS_CENTER? ButtonServoPosition.CENTER:
+                        ButtonServoPosition.RIGHT;
+    }
+
+    protected void setButtonServoPosition(ButtonServoPosition pos) {
         switch (pos) {
             case LEFT:
-                _servo.setPosition(SERVO_POS_LEFT);
+                _buttonServo.setPosition(BUTTON_SERVO_POS_LEFT);
                 break;
             case CENTER:
-                _servo.setPosition(SERVO_POS_CENTER);
+                _buttonServo.setPosition(BUTTON_SERVO_POS_CENTER);
                 break;
             case RIGHT:
-                _servo.setPosition(SERVO_POS_RIGHT);
+                _buttonServo.setPosition(BUTTON_SERVO_POS_RIGHT);
+                break;
+        }
+    }
+
+    protected ManServoPosition getManServoPosition() {
+        double pos = _manServo.getPosition();
+        return  pos == MAN_SERVO_POS_DEPLOY? ManServoPosition.DEPLOY: ManServoPosition.HOME;
+    }
+
+    protected void setManServoPosition(ManServoPosition pos) {
+        switch (pos) {
+            case HOME:
+                _manServo.setPosition(MAN_SERVO_POS_HOME);
+                break;
+            case DEPLOY:
+                _manServo.setPosition(MAN_SERVO_POS_DEPLOY);
                 break;
         }
     }
@@ -289,6 +335,10 @@ public abstract class SuperK9Base extends OpMode {
 
     protected double getLegoLight() {
         return _sensorLego.getLightDetected();
+    }
+
+    private int sign(double value) {
+        return value > 0? 1: value < 0? -1: 0;
     }
 
     private void setEncoderMode(DcMotorController.RunMode mode) {

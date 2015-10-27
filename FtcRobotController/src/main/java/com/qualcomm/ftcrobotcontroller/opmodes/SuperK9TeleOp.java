@@ -82,8 +82,8 @@ public class SuperK9TeleOp extends SuperK9Base {
 		float right = -gamepad1.right_stick_y;
 		this.setPowerScaled(left, right);
 
-        ServoPosition pos = gamepad1.dpad_left? ServoPosition.LEFT: gamepad1.dpad_right? ServoPosition.RIGHT: ServoPosition.CENTER;
-        this.setServoPosition(pos);
+        ButtonServoPosition pos = gamepad1.dpad_left? ButtonServoPosition.LEFT: gamepad1.dpad_right? ButtonServoPosition.RIGHT: ButtonServoPosition.CENTER;
+        this.setButtonServoPosition(pos);
 
         this.setColorSensorLED(gamepad1.b);
 	}
