@@ -54,7 +54,7 @@ import com.qualcomm.robotcore.util.Range;
  */
 public abstract class SuperK9Base extends OpMode {
 
-    // dead reckonining information //
+    // dead reckoning information //
 	final static int    ENCODER_TICKS_PER_REV = 1120; // Neverest 40
 	final static int    WHEEL_DIAMETER        = 6;    // inches / REV
 	final static double INCHES_PER_TICK       = (WHEEL_DIAMETER * Math.PI) / ENCODER_TICKS_PER_REV;
@@ -168,8 +168,8 @@ public abstract class SuperK9Base extends OpMode {
 		 * will return a null value. The legacy NXT-compatible motor controllers
 		 * are currently write only.
 		 */
-        telemetry.addData("left encoder", String.format("%.2f", this.getLeftPositionInches()));
-        telemetry.addData("right encoder", String.format("%.2f", this.getRightPositionInches()));
+        telemetry.addData("Left encoder", String.format("%.2f", this.getLeftPositionInches()));
+        telemetry.addData("Right encoder", String.format("%.2f", this.getRightPositionInches()));
         telemetry.addData("Color (Hue)", String.format("%s (%.2f)", this.getColorSensor(), this.getColorSensorHue()));
         telemetry.addData("ODS", String.format("%.2f", this.getODSLight()));
         telemetry.addData("Lego", String.format("%.2f", this.getLegoLight()));

@@ -104,7 +104,7 @@ public class SuperK9Auto extends SuperK9Base {
                     this.setPower(0, 0);
                     this.resetEncoders();
 
-                    // wait for 1 second, the turn //
+                    // wait for 1 second, turn right //
                     _state = States.WAIT_FOR_TIME;
                     _targetValue = _time.time() + 1;
                     _nextState   = States.TURN_RIGHT;
@@ -118,7 +118,7 @@ public class SuperK9Auto extends SuperK9Base {
                     this.setPower(0, 0);
                     this.resetEncoders();
 
-                    // wait for 1 second, deploy man //
+                    // wait for 1 second, drive forward //
                     _state = States.WAIT_FOR_TIME;
                     _targetValue = _time.time() + 1;
                     _nextState   = States.DRIVE_FORWARD2;
@@ -132,7 +132,7 @@ public class SuperK9Auto extends SuperK9Base {
                     this.setPower(0, 0);
                     this.resetEncoders();
 
-                    // wait for 1 second, the turn //
+                    // wait for 1 second, deploy man //
                     _state = States.WAIT_FOR_TIME;
                     _targetValue = _time.time() + 1;
                     _nextState   = States.DEPLOY_MAN;
@@ -141,7 +141,7 @@ public class SuperK9Auto extends SuperK9Base {
             case DEPLOY_MAN:
                 this.setManServoPosition(ManServoPosition.DEPLOY);
 
-                // wait for 1 second, reset man //
+                // wait for 2 seconds, reset man //
                 _state = States.WAIT_FOR_TIME;
                 _targetValue = _time.time() + 2;
                 _nextState   = States.RESET_MAN;
@@ -160,14 +160,13 @@ public class SuperK9Auto extends SuperK9Base {
                     this.setPower(0, 0);
                     this.resetEncoders();
 
-                    // wait for 1 second, the turn //
                     _state = States.SET_BUTTON_PUSHER;
                 }
                 break;
             case SET_BUTTON_PUSHER:
                 this.setButtonServoPosition(_color == FtcColor.RED? ButtonServoPosition.LEFT: ButtonServoPosition.RIGHT);
 
-                // wait for 1 second, reset man //
+                // wait for half a second, drive forward //
                 _state = States.WAIT_FOR_TIME;
                 _targetValue = _time.time() + 0.5;
                 _nextState   = States.DRIVE_FORWARD3;
@@ -180,6 +179,7 @@ public class SuperK9Auto extends SuperK9Base {
                     this.setPower(0, 0);
                     this.resetEncoders();
 
+                    // wait for 1 second, reverse //
                     _state = States.WAIT_FOR_TIME;
                     _targetValue = _time.time() + 1;
                     _nextState   = States.DRIVE_REVERSE2;

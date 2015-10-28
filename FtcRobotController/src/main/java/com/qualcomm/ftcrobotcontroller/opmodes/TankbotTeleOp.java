@@ -39,6 +39,7 @@ import com.qualcomm.robotcore.hardware.DcMotorController;
 import com.qualcomm.robotcore.hardware.LightSensor;
 import com.qualcomm.robotcore.hardware.OpticalDistanceSensor;
 import com.qualcomm.robotcore.hardware.Servo;
+import com.qualcomm.robotcore.util.Range;
 
 /**
  * TeleOp Mode
@@ -47,18 +48,18 @@ import com.qualcomm.robotcore.hardware.Servo;
  */
 public class TankbotTeleOp extends OpMode {
 
-    // dead reckonining information //
+    // dead reckoning information //
     //final static int    ENCODER_TICKS_PER_REV = 1120; // Neverest 40
     //final static int    WHEEL_DIAMETER        = 6;    // inches / REV
     //final static double INCHES_PER_TICK       = (WHEEL_DIAMETER * Math.PI) / ENCODER_TICKS_PER_REV;
 
     // hardware instances //
-    //DcMotor _motorRightFront;
-    //DcMotor _motorRightRear;
-    //DcMotor _motorLeftFront;
-    //DcMotor _motorLeftRear;
+    DcMotor _motorRightFront;
+    DcMotor _motorRightRear;
+    DcMotor _motorLeftFront;
+    DcMotor _motorLeftRear;
 
-    Servo _leftServo, _rightServo;
+    //Servo _leftServo, _rightServo;
 
     //OpticalDistanceSensor _sensorODS;
     //LightSensor _sensorLego;
@@ -66,21 +67,23 @@ public class TankbotTeleOp extends OpMode {
 
     @Override
     public void init() {
-        /*_motorRightFront = hardwareMap.dcMotor.get("rightFront");
+        _motorRightFront = hardwareMap.dcMotor.get("rightFront");
         _motorRightRear  = hardwareMap.dcMotor.get("rightRear");
         _motorLeftFront = hardwareMap.dcMotor.get("leftFront");
         _motorLeftRear = hardwareMap.dcMotor.get("leftRear");
 
-        _motorRightFront.setDirection(DcMotor.Direction.REVERSE);
-        _motorRightRear.setDirection(DcMotor.Direction.REVERSE);
+        _motorLeftFront.setDirection(DcMotor.Direction.REVERSE);
+        _motorLeftRear.setDirection(DcMotor.Direction.REVERSE);
 
+        /*
         _sensorODS = hardwareMap.opticalDistanceSensor.get("ods");
         _sensorLego = hardwareMap.lightSensor.get("light");
 
-        _manServo = hardwareMap.servo.get("manServo");*/
+        _manServo = hardwareMap.servo.get("manServo");
         _leftServo = hardwareMap.servo.get("leftMotor");
         _rightServo = hardwareMap.servo.get("rightMotor");
         _rightServo.setDirection(Servo.Direction.REVERSE);
+        */
     }
 
     @Override
@@ -95,22 +98,41 @@ public class TankbotTeleOp extends OpMode {
         /*float pos = (gamepad1.left_stick_y + 1) / 2;
         _manServo.setPosition(pos);
         telemetry.addData("ServoPos", pos);*/
-        double left = (-gamepad1.left_stick_y*0.79 + 1) / 2;
-        double right = (-gamepad1.right_stick_y*0.79 + 1) / 2;
+        double left  = -gamepad1.left_stick_y;
+        double right = -gamepad1.right_stick_y;
 
+        setPowerScaled(left, right);
 
-        _leftServo.setPosition(left);
-        _rightServo.setPosition(right);
+        //_leftServo.setPosition(left);
+        //_rightServo.setPosition(right);
 
-        telemetry.addData("left  ", left);
-        telemetry.addData("right", right);
-        /*telemetry.addData("left rear  ", _motorLeftRear.getCurrentPosition());
+        telemetry.addData("Text", "*** Robot Data***");
+        /*telemetry.addData("Left", left);
+        telemetry.addData("Right", right);
+        telemetry.addData("left rear  ", _motorLeftRear.getCurrentPosition());
         telemetry.addData("right rear ", _motorRightRear.getCurrentPosition());*/
     }
 
     @Override
     public void stop() {
 
+    }
+
+    private void setPowerScaled(double left, double right) {
+        left  = Range.clip(left, -1, 1);
+        right = Range.clip(right, -1, 1);
+
+        //left  = scalePower(left);
+        //right = scalePower(right);
+
+        setPower(left, right);
+    }
+
+    private void setPower(double left, double right) {
+        _motorRightFront.setPower(right);
+        _motorRightRear.setPower(right);
+        _motorLeftFront.setPower(left);
+        _motorLeftRear.setPower(left);
     }
 
     /*private void setEncoderMode(DcMotorController.RunMode mode) {
