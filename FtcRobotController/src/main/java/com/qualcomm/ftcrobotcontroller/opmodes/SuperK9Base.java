@@ -78,6 +78,12 @@ public abstract class SuperK9Base extends OpMode {
         DEPLOY
     }
 
+    final static double PLOW_POWER_MIN = -0.25;
+    final static double PLOW_POWER_MAX = 0.5;
+
+    final static double DOZER_POWER_MIN = -0.35;
+    final static double DOZER_POWER_MAX = 0.5;
+
     // color sensor information //
     final static int COLOR_LED_CHANNEL = 5;
 
@@ -98,6 +104,8 @@ public abstract class SuperK9Base extends OpMode {
 
     Servo _buttonServo;
     Servo _manServo;
+    Servo _plowMotor;
+    Servo _dozerMotor;
 
 	DeviceInterfaceModule _cdim;
 	ColorSensor _sensorRGB;
@@ -137,6 +145,12 @@ public abstract class SuperK9Base extends OpMode {
 
         _manServo = hardwareMap.servo.get("manServo");
         this.setManServoPosition(ManServoPosition.HOME);
+
+        _plowMotor = hardwareMap.servo.get("plowMotor");
+        this.setPlowPower(0);
+
+        _dozerMotor = hardwareMap.servo.get("dozerMotor");
+        this.setDozerPower(0);
 
         this.setHasRearEncoders(true);
         this.k9Init();
@@ -307,6 +321,26 @@ public abstract class SuperK9Base extends OpMode {
                 _manServo.setPosition(MAN_SERVO_POS_DEPLOY);
                 break;
         }
+    }
+
+    protected double getPlowPower() {
+        return (_plowMotor.getPosition() - 1) * 2;
+    }
+
+    // positive is deploy, negative retract //
+    protected void setPlowPower(double power) {
+        power = (Range.clip(power, PLOW_POWER_MIN, PLOW_POWER_MAX) + 1) / 2;
+        _plowMotor.setPosition(power);
+    }
+
+    protected double getDozerPower() {
+        return (_dozerMotor.getPosition() - 1) * 2;
+    }
+
+    // positive is deploy, negative retract //
+    protected void setDozerPower(double power) {
+        power = (Range.clip(power, DOZER_POWER_MIN, DOZER_POWER_MAX) + 1) / 2;
+        _dozerMotor.setPosition(power);
     }
 
     protected float getColorSensorHue() {

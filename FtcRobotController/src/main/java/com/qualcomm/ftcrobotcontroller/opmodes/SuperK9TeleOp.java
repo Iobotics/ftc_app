@@ -86,5 +86,9 @@ public class SuperK9TeleOp extends SuperK9Base {
         this.setButtonServoPosition(pos);
 
         this.setColorSensorLED(gamepad1.b);
+
+		this.setPlowPower(gamepad1.left_bumper ? 1 : gamepad1.left_trigger > 0.5 ? -1 : 0);
+        this.setDozerPower(gamepad1.right_bumper? 1: gamepad1.right_trigger > 0.5? -1: 0);
+        //telemetry.addData("trigger", gamepad1.right_trigger);
 	}
 }
