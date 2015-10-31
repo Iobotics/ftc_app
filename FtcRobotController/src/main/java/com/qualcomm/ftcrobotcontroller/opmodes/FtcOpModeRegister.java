@@ -58,7 +58,10 @@ public class FtcOpModeRegister implements OpModeRegister {
         manager.register("SuperK9Auto:Red", new SuperK9Auto(SuperK9Base.FtcColor.RED));
         manager.register("SuperK9TeleOp", SuperK9TeleOp.class);
         manager.register("SuperK9Test", SuperK9Test.class);
+        manager.register("TankbotAuto", TankbotAuto.class);
         manager.register("TankbotTeleOp", TankbotTeleOp.class);
+        manager.register("TankbotTest", TankbotTest.class);
+        manager.register("TankbotTest2", TankbotTest2.class);
 
         manager.register("NullOp", NullOp.class);
 
@@ -97,8 +100,5 @@ public class FtcOpModeRegister implements OpModeRegister {
         //manager.register("PushBotDriveTouch", PushBotDriveTouch.java);
         //manager.register("PushBotIrSeek", PushBotIrSeek.java);
         //manager.register("PushBotSquare", PushBotSquare.java);
-
-
-
     }
 }
