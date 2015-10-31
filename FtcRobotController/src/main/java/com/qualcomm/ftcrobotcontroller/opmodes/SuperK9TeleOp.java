@@ -60,6 +60,7 @@ public class SuperK9TeleOp extends SuperK9Base {
 	 */
 	@Override
 	public void k9Start() {
+		this.setManServoPosition(ManServoPosition.HOME);
 		this.runWithoutEncoders();
 	}
 
@@ -90,5 +91,13 @@ public class SuperK9TeleOp extends SuperK9Base {
 		this.setPlowPower(gamepad1.left_bumper ? 1 : gamepad1.left_trigger > 0.5 ? -1 : 0);
         this.setDozerPower(gamepad1.right_bumper? 1: gamepad1.right_trigger > 0.5? -1: 0);
         //telemetry.addData("trigger", gamepad1.right_trigger);
+
+		if(gamepad1.y) {
+			this.setManServoPosition(ManServoPosition.DEPLOY);
+		} else if(gamepad1.b || gamepad1.right_bumper){
+			this.setManServoPosition(ManServoPosition.HOME);
+		} else if(gamepad1.a) {
+			this.setManServoPosition(ManServoPosition.PARK);
+		}
 	}
 }

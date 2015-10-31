@@ -61,7 +61,10 @@ public class SuperK9Test extends OpMode {
     DcMotor _motorLeftFront;
     DcMotor _motorLeftRear;
 
+    Servo _buttonServo;
     Servo _manServo;
+    Servo _plowServo;
+    Servo _dozerServo;
 
     OpticalDistanceSensor _sensorODS;
     LightSensor _sensorLego;
@@ -81,12 +84,16 @@ public class SuperK9Test extends OpMode {
         _sensorLego = hardwareMap.lightSensor.get("light");
 
         _manServo = hardwareMap.servo.get("manServo");
+        _buttonServo = hardwareMap.servo.get("buttonServo");
+        _plowServo = hardwareMap.servo.get("plowMotor");
+        _dozerServo = hardwareMap.servo.get("dozerMotor");
     }
 
     @Override
     public void start() {
         this.setEncoderMode(DcMotorController.RunMode.RUN_WITHOUT_ENCODERS);
-
+        _plowServo.setPosition(0.5);
+        _dozerServo.setPosition(0.5);
     }
 
     @Override

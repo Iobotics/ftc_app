@@ -64,7 +64,7 @@ public class SuperK9Auto extends SuperK9Base {
         DEPLOY_MAN_DROPPER,
         RESET_MAN_DROPPER,
         READ_COLOR_SENSOR,
-        REVERSE_FOR_PUSH,
+        BACKUP_FOR_PUSH,
         SET_BUTTON_PUSHER,
         PUSH_BUTTON,
         LEAVE_BEACON,
@@ -91,7 +91,9 @@ public class SuperK9Auto extends SuperK9Base {
     }
 
     @Override
-    protected void k9Init() { }
+    protected void k9Init() {
+        this.setManServoPosition(ManServoPosition.HOME);
+    }
 
     @Override
     protected void k9Start() {
@@ -106,14 +108,27 @@ public class SuperK9Auto extends SuperK9Base {
             case START:
                 this.resetEncoders();
                 this.setPower(0, 0);
+                this.setPlowPower(0);
 
-                _state = States.DRIVE_TO_BEACON_ZONE;
-                _targetValue = 86.5;
+                _state = States.LOWER_PLOW;
+                _targetValue = 0;
                 break;
-            case DRIVE_TO_BEACON_ZONE:
+            case LOWER_PLOW:
+                if(_targetValue == 0) {
+                    this.setPlowPower(-1.0);
+                    _targetValue = _time.time() + 1.25;
+                    break;
+                }
+                if(_time.time() >= _targetValue) {
+                    this.setPlowPower(0);
+                    _state = States.DRIVE_TO_BEACON_ZONE;
+                    _targetValue = 86.5;
+                }
+                break;
+            case DRIVE_TO_BEACON_ZONE: // reverse //
                 this.runWithEncoders();
-                this.setPower(RUN_POWER, RUN_POWER);
-                if(this.getLeftPositionInches() >= _targetValue && this.getRightPositionInches() >= _targetValue) {
+                this.setPower(-RUN_POWER, -RUN_POWER);
+                if(this.getLeftPositionInches() <= -_targetValue && this.getRightPositionInches() <= -_targetValue) {
                     this.setPower(0, 0);
                     this.resetEncoders();
 
@@ -128,13 +143,13 @@ public class SuperK9Auto extends SuperK9Base {
                 this.runWithEncoders();
                 // blue -> turn right, red -> turn left //
                 if(_robotColor == FtcColor.BLUE) {
-                    // run left wheel, read left encoder //
-                    this.setPower(TURN_POWER, 0);
-                    _nextTarget = this.getLeftPositionInches();
+                    // run right wheel in reverse, read right encoder //
+                    this.setPower(0, -TURN_POWER);
+                    _nextTarget = -this.getRightPositionInches();
                 } else {
-                    // run right wheel, read right encoder //
-                    this.setPower(0, TURN_POWER);
-                    _nextTarget = this.getRightPositionInches();
+                    // run left wheel in reverse, read left encoder //
+                    this.setPower(-TURN_POWER, 0);
+                    _nextTarget = -this.getLeftPositionInches();
                 }
                 if(_nextTarget > _targetValue) {
                     this.setPower(0, 0);
@@ -149,8 +164,8 @@ public class SuperK9Auto extends SuperK9Base {
                 break;
             case DRIVE_TO_BEACON:
                 this.runWithEncoders();
-                this.setPower(RUN_POWER, RUN_POWER);
-                if(this.getLeftPositionInches() >= _targetValue && this.getRightPositionInches() >= _targetValue) {
+                this.setPower(-RUN_POWER, -RUN_POWER); // reverse //
+                if(this.getLeftPositionInches() <= -_targetValue && this.getRightPositionInches() <= -_targetValue) {
                     this.setPower(0, 0);
                     this.resetEncoders();
 
@@ -180,13 +195,13 @@ public class SuperK9Auto extends SuperK9Base {
             case READ_COLOR_SENSOR:
                 _sensorColor = this.getColorSensor();
 
-                _state       = States.REVERSE_FOR_PUSH;
+                _state       = States.BACKUP_FOR_PUSH;
                 _targetValue = 5;
                 break;
-            case REVERSE_FOR_PUSH:
+            case BACKUP_FOR_PUSH:
                 this.runWithEncoders();
-                this.setPower(-RUN_POWER, -RUN_POWER);
-                if(this.getLeftPositionInches() <= -_targetValue && this.getRightPositionInches() <= -_targetValue) {
+                this.setPower(RUN_POWER, RUN_POWER);
+                if(this.getLeftPositionInches() >= _targetValue && this.getRightPositionInches() >= _targetValue) {
                     this.setPower(0, 0);
                     this.resetEncoders();
 
@@ -206,8 +221,8 @@ public class SuperK9Auto extends SuperK9Base {
                 break;
             case PUSH_BUTTON:
                 this.runWithEncoders();
-                this.setPower(RUN_POWER, RUN_POWER);
-                if(this.getLeftPositionInches() >= _targetValue && this.getRightPositionInches() >= _targetValue) {
+                this.setPower(-RUN_POWER, -RUN_POWER); // reverse //
+                if(this.getLeftPositionInches() <= -_targetValue && this.getRightPositionInches() <= -_targetValue) {
                     this.setPower(0, 0);
                     this.resetEncoders();
 
@@ -220,29 +235,19 @@ public class SuperK9Auto extends SuperK9Base {
                 break;
             case LEAVE_BEACON:
                 this.runWithEncoders();
-                this.setPower(-RUN_POWER, -RUN_POWER);
-                if(this.getLeftPositionInches() <= -_targetValue && this.getRightPositionInches() <= -_targetValue) {
+                this.setPower(RUN_POWER, RUN_POWER);
+                if(this.getLeftPositionInches() >= _targetValue && this.getRightPositionInches() >= _targetValue) {
                     this.setPower(0, 0);
                     this.resetEncoders();
 
                     _state = States.STOP;
                 }
                 break;
-            case LOWER_PLOW:
-                if(this.getPlowPower() == 0) {
-                    this.setPlowPower(-1.0);
-                    _targetValue = _time.time() + 1.5;
-                    break;
-                }
-                if(_time.time() >= _targetValue) {
-                    this.setPlowPower(0);
-                    _state = States.STOP; // fixme //
-                }
-                break;
+
             case RAISE_PLOW:
-                if(this.getPlowPower() == 0) {
+                if(_targetValue == 0) {
                     this.setPlowPower(1.0);
-                    _targetValue = _time.time() + 1.5;
+                    _targetValue = _time.time() + 1.25;
                     break;
                 }
                 if(_time.time() >= _targetValue) {
@@ -251,7 +256,7 @@ public class SuperK9Auto extends SuperK9Base {
                 }
                 break;
             case LOWER_DOZER:
-                if(this.getDozerPower() == 0) {
+                if(_targetValue == 0) {
                     this.setDozerPower(-1.0);
                     _targetValue = _time.time() + 1.5;
                     break;
@@ -262,7 +267,7 @@ public class SuperK9Auto extends SuperK9Base {
                 }
                 break;
             case RAISE_DOZER:
-                if(this.getDozerPower() == 0) {
+                if(_targetValue == 0) {
                     this.setDozerPower(1.0);
                     _targetValue = _time.time() + 1.5;
                     break;

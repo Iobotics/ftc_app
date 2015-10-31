@@ -70,10 +70,12 @@ public abstract class SuperK9Base extends OpMode {
         RIGHT
     }
 
-    final static double MAN_SERVO_POS_HOME   = 0.0;
-    final static double MAN_SERVO_POS_DEPLOY = 1.0;
+    final static double MAN_SERVO_POS_PARK   = 0.0;
+    final static double MAN_SERVO_POS_HOME   = 0.18;
+    final static double MAN_SERVO_POS_DEPLOY = 0.78;
 
     protected enum ManServoPosition {
+        PARK,
         HOME,
         DEPLOY
     }
@@ -184,9 +186,11 @@ public abstract class SuperK9Base extends OpMode {
 		 */
         telemetry.addData("Left encoder", String.format("%.2f", this.getLeftPositionInches()));
         telemetry.addData("Right encoder", String.format("%.2f", this.getRightPositionInches()));
-        telemetry.addData("Color (Hue)", String.format("%s (%.2f)", this.getColorSensor(), this.getColorSensorHue()));
-        telemetry.addData("ODS", String.format("%.2f", this.getODSLight()));
-        telemetry.addData("Lego", String.format("%.2f", this.getLegoLight()));
+        telemetry.addData("Plow power", String.format("%.2f", this.getPlowPower()));
+        telemetry.addData("Dozer power", String.format("%.2f", this.getDozerPower()));
+        //telemetry.addData("Color (Hue)", String.format("%s (%.2f)", this.getColorSensor(), this.getColorSensorHue()));
+        //telemetry.addData("ODS", String.format("%.2f", this.getODSLight()));
+        //telemetry.addData("Lego", String.format("%.2f", this.getLegoLight()));
     }
 
     /*
@@ -309,7 +313,9 @@ public abstract class SuperK9Base extends OpMode {
 
     protected ManServoPosition getManServoPosition() {
         double pos = _manServo.getPosition();
-        return  pos == MAN_SERVO_POS_DEPLOY? ManServoPosition.DEPLOY: ManServoPosition.HOME;
+        return  pos == MAN_SERVO_POS_DEPLOY? ManServoPosition.DEPLOY:
+                pos == MAN_SERVO_POS_HOME? ManServoPosition.HOME:
+                        ManServoPosition.PARK;
     }
 
     protected void setManServoPosition(ManServoPosition pos) {
@@ -320,11 +326,14 @@ public abstract class SuperK9Base extends OpMode {
             case DEPLOY:
                 _manServo.setPosition(MAN_SERVO_POS_DEPLOY);
                 break;
+            case PARK:
+                _manServo.setPosition(MAN_SERVO_POS_PARK);
+                break;
         }
     }
 
     protected double getPlowPower() {
-        return (_plowMotor.getPosition() - 1) * 2;
+        return (_plowMotor.getPosition() * 2) - 1;
     }
 
     // negative is deploy, positive retract //
@@ -334,7 +343,7 @@ public abstract class SuperK9Base extends OpMode {
     }
 
     protected double getDozerPower() {
-        return (_dozerMotor.getPosition() - 1) * 2;
+        return (_dozerMotor.getPosition() * 2) - 1;
     }
 
     // positive is deploy, negative retract //
