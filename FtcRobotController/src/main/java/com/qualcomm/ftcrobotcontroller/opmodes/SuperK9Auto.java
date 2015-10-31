@@ -85,6 +85,47 @@ public class SuperK9Auto extends SuperK9Base {
     private final ElapsedTime _time = new ElapsedTime();
     private final FtcColor _robotColor;
     private FtcColor _sensorColor;
+    private AutoParameters _autoParams;
+
+    public static class AutoParameters {
+        private AutoParameters() { }
+        public double DistanceToBeaconZone;
+        public double TurnToBeaconZone;
+        public double DistanceToBeacon;
+        public double DistanceToLeaveBeacon;
+    }
+
+    public static final AutoParameters Auto8740Blue = new AutoParameters();
+    public static final AutoParameters Auto8740Red  = new AutoParameters();
+    public static final AutoParameters Auto8741Blue = new AutoParameters();
+    public static final AutoParameters Auto8741Red  = new AutoParameters();
+
+    static {
+        // Robot 8740 Blue //
+        Auto8740Blue.DistanceToBeaconZone  = 86.5;
+        Auto8740Blue.TurnToBeaconZone      = 20;
+        Auto8740Blue.DistanceToBeacon      = 5;
+        Auto8740Blue.DistanceToLeaveBeacon = 5;
+
+        // Robot 8740 Red //
+        Auto8740Blue.DistanceToBeaconZone  = 86.5;
+        Auto8740Blue.TurnToBeaconZone      = 20;
+        Auto8740Blue.DistanceToBeacon      = 5;
+        Auto8740Blue.DistanceToLeaveBeacon = 5;
+
+        // Robot 8741 Blue //
+        Auto8741Blue.DistanceToBeaconZone  = 86.5;
+        Auto8741Blue.TurnToBeaconZone      = 20;
+        Auto8741Blue.DistanceToBeacon      = 5;
+        Auto8741Blue.DistanceToLeaveBeacon = 5;
+
+        // Robot 8741 Red //
+        Auto8741Blue.DistanceToBeaconZone  = 86.5;
+        Auto8741Blue.TurnToBeaconZone      = 20;
+        Auto8741Blue.DistanceToBeacon      = 5;
+        Auto8741Blue.DistanceToLeaveBeacon = 5;
+
+    }
 
     public SuperK9Auto(FtcColor robotColor) {
         _robotColor = robotColor;
@@ -93,6 +134,16 @@ public class SuperK9Auto extends SuperK9Base {
     @Override
     protected void k9Init() {
         this.setManServoPosition(ManServoPosition.HOME);
+
+        // set parameters by team //
+        switch(this.getTeamNumber()) {
+            case TEAM_8740:
+                _autoParams = _robotColor == FtcColor.BLUE? Auto8740Blue: Auto8740Red;
+                break;
+            case TEAM_8741:
+                _autoParams = _robotColor == FtcColor.BLUE? Auto8741Blue: Auto8741Red;
+                break;
+        }
     }
 
     @Override
@@ -122,7 +173,7 @@ public class SuperK9Auto extends SuperK9Base {
                 if(_time.time() >= _targetValue) {
                     this.setPlowPower(0);
                     _state = States.DRIVE_TO_BEACON_ZONE;
-                    _targetValue = 86.5;
+                    _targetValue = _autoParams.DistanceToBeaconZone;
                 }
                 break;
             case DRIVE_TO_BEACON_ZONE: // reverse //
@@ -136,7 +187,7 @@ public class SuperK9Auto extends SuperK9Base {
                     _state = States.WAIT_FOR_TIME;
                     _targetValue = _time.time() + 1;
                     _nextState   = States.TURN_TO_BEACON;
-                    _nextTarget  = 15;
+                    _nextTarget  = _autoParams.TurnToBeaconZone;
                 }
                 break;
             case TURN_TO_BEACON:
@@ -159,7 +210,7 @@ public class SuperK9Auto extends SuperK9Base {
                     _state = States.WAIT_FOR_TIME;
                     _targetValue = _time.time() + 1;
                     _nextState   = States.DRIVE_TO_BEACON;
-                    _nextTarget  = 5;
+                    _nextTarget  = _autoParams.DistanceToBeacon;
                 }
                 break;
             case DRIVE_TO_BEACON:
@@ -189,14 +240,14 @@ public class SuperK9Auto extends SuperK9Base {
                     _state = States.READ_COLOR_SENSOR;
                 } else {
                     _state = States.LEAVE_BEACON;
-                    _nextTarget = 5; // fixme: this is a repeated constant //
+                    _nextTarget = _autoParams.DistanceToLeaveBeacon;
                 }
                 break;
             case READ_COLOR_SENSOR:
                 _sensorColor = this.getColorSensor();
 
                 _state       = States.BACKUP_FOR_PUSH;
-                _targetValue = 5;
+                _targetValue = _autoParams.DistanceToBeacon;
                 break;
             case BACKUP_FOR_PUSH:
                 this.runWithEncoders();
@@ -217,7 +268,7 @@ public class SuperK9Auto extends SuperK9Base {
                 _state = States.WAIT_FOR_TIME;
                 _targetValue = _time.time() + 0.5;
                 _nextState   = States.PUSH_BUTTON;
-                _nextTarget  = 5;
+                _nextTarget  = _autoParams.DistanceToBeacon;
                 break;
             case PUSH_BUTTON:
                 this.runWithEncoders();
@@ -230,7 +281,7 @@ public class SuperK9Auto extends SuperK9Base {
                     _state = States.WAIT_FOR_TIME;
                     _targetValue = _time.time() + 1;
                     _nextState   = States.LEAVE_BEACON;
-                    _nextTarget  = 5;
+                    _nextTarget  = _autoParams.DistanceToLeaveBeacon;
                 }
                 break;
             case LEAVE_BEACON:

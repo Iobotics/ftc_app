@@ -38,6 +38,7 @@ import com.qualcomm.robotcore.hardware.ColorSensor;
 import com.qualcomm.robotcore.hardware.DcMotor;
 import com.qualcomm.robotcore.hardware.DcMotorController;
 import com.qualcomm.robotcore.hardware.DeviceInterfaceModule;
+import com.qualcomm.robotcore.hardware.DigitalChannel;
 import com.qualcomm.robotcore.hardware.DigitalChannelController;
 import com.qualcomm.robotcore.hardware.LightSensor;
 import com.qualcomm.robotcore.hardware.OpticalDistanceSensor;
@@ -118,6 +119,12 @@ public abstract class SuperK9Base extends OpMode {
     int _leftEncoderOffset  = 0;
     int _rightEncoderOffset = 0;
 
+    protected enum TeamNumber {
+        TEAM_8740,
+        TEAM_8741
+    }
+    private TeamNumber _teamNumber;
+
 	/*
 	 * Code to run when the op mode is initialized goes here
 	 *
@@ -154,6 +161,12 @@ public abstract class SuperK9Base extends OpMode {
         _dozerMotor = hardwareMap.servo.get("dozerMotor");
         this.setDozerPower(0);
 
+        try {
+            DigitalChannel jumper = hardwareMap.digitalChannel.get("jumper");
+            _teamNumber = jumper.getState()? TeamNumber.TEAM_8740: TeamNumber.TEAM_8741;
+        } catch(Exception e) {
+            // no jumper set //
+        }
         this.setHasRearEncoders(true);
         this.k9Init();
 	}
@@ -188,6 +201,7 @@ public abstract class SuperK9Base extends OpMode {
         telemetry.addData("Right encoder", String.format("%.2f", this.getRightPositionInches()));
         telemetry.addData("Plow power", String.format("%.2f", this.getPlowPower()));
         telemetry.addData("Dozer power", String.format("%.2f", this.getDozerPower()));
+        telemetry.addData("Team #", this.getTeamNumber());
         //telemetry.addData("Color (Hue)", String.format("%s (%.2f)", this.getColorSensor(), this.getColorSensorHue()));
         //telemetry.addData("ODS", String.format("%.2f", this.getODSLight()));
         //telemetry.addData("Lego", String.format("%.2f", this.getLegoLight()));
@@ -210,6 +224,10 @@ public abstract class SuperK9Base extends OpMode {
     protected void k9Loop() { }
 
     protected void k9Stop() { }
+
+    protected TeamNumber getTeamNumber() {
+        return _teamNumber;
+    }
 
 	protected void setPowerScaled(double leftPower, double rightPower) {
 
