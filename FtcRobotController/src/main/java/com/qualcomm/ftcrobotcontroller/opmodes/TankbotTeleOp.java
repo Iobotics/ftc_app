@@ -50,7 +50,7 @@ public class TankbotTeleOp extends TankbotBase {
 
     @Override
     public void TBStart() {
-        this.setManServoPosition(ManServoPosition.HOME);
+        this.setManServoPosition(ManServoPosition.PARK);
         this.runWithoutEncoders();
     }
 
@@ -76,10 +76,16 @@ public class TankbotTeleOp extends TankbotBase {
             this.setManServoPosition(ManServoPosition.PARK);
         }
 
-        telemetry.addData("Text", "*** Robot Data***");
-        /*telemetry.addData("Left", left);
-        telemetry.addData("Right", right);
-        telemetry.addData("left rear  ", _motorLeftRear.getCurrentPosition());
-        telemetry.addData("right rear ", _motorRightRear.getCurrentPosition());*/
+        if(gamepad1.right_trigger > 0.5) {
+            this.setRightTriggerDeployed(false);
+        } else if(gamepad1.right_bumper) {
+            this.setRightTriggerDeployed(true);
+        }
+
+        if(gamepad1.left_trigger > 0.5) {
+            this.setLeftTriggerDeployed(false);
+        } else if(gamepad1.left_bumper) {
+            this.setLeftTriggerDeployed(true);
+        }
     }
 }

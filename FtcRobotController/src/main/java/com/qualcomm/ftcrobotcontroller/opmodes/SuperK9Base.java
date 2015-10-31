@@ -166,6 +166,7 @@ public abstract class SuperK9Base extends OpMode {
             _teamNumber = jumper.getState()? TeamNumber.TEAM_8740: TeamNumber.TEAM_8741;
         } catch(Exception e) {
             // no jumper set //
+            _teamNumber = TeamNumber.TEAM_8740;
         }
         this.setHasRearEncoders(true);
         this.k9Init();

@@ -68,6 +68,12 @@ public abstract class TankbotBase extends OpMode {
         DEPLOY
     }
 
+    final static double TRIGGER_LEFT_POS_IN  = 0.5;
+    final static double TRIGGER_LEFT_POS_OUT = 0.03;
+
+    final static double TRIGGER_RIGHT_POS_IN  = 0.5;
+    final static double TRIGGER_RIGHT_POS_OUT = 0.03;
+
     protected enum FtcColor {
         RED,
         BLUE,
@@ -81,6 +87,8 @@ public abstract class TankbotBase extends OpMode {
 	DcMotor _motorLeftRear;
 
     Servo _manServo;
+    Servo _leftTrigger;
+    Servo _rightTrigger;
 
     boolean _hasRearEncoders = false;
     int _leftEncoderOffset  = 0;
@@ -103,6 +111,11 @@ public abstract class TankbotBase extends OpMode {
 
         _manServo = hardwareMap.servo.get("manServo");
         this.setManServoPosition(ManServoPosition.HOME);
+
+        _rightTrigger = hardwareMap.servo.get("rightTrigger");
+        this.setRightTriggerDeployed(false);
+        _leftTrigger  = hardwareMap.servo.get("leftTrigger");
+        this.setLeftTriggerDeployed(false);
 
         this.setHasRearEncoders(true);
         this.TBInit();
@@ -137,6 +150,8 @@ public abstract class TankbotBase extends OpMode {
         //telemetry.addData("Left encoder", String.format("%.2f", this.getLeftPositionInches()));
         //telemetry.addData("Right encoder", String.format("%.2f", this.getRightPositionInches()));
         telemetry.addData("Man Servo", this.getManServoPosition());
+        telemetry.addData("Left Trigger", this.getLeftTriggerDeployed());
+        telemetry.addData("Right Trigger", this.getRightTriggerDeployed());
     }
 
     /*
@@ -157,13 +172,30 @@ public abstract class TankbotBase extends OpMode {
 
     protected void TBStop() { }
 
+
+    protected boolean getLeftTriggerDeployed() {
+        return _leftTrigger.getPosition() == TRIGGER_LEFT_POS_OUT;
+    }
+
+    protected void setLeftTriggerDeployed(boolean out) {
+        _leftTrigger.setPosition(out ? TRIGGER_LEFT_POS_OUT: TRIGGER_LEFT_POS_IN);
+    }
+
+    protected boolean getRightTriggerDeployed() {
+        return _rightTrigger.getPosition() == TRIGGER_RIGHT_POS_OUT;
+    }
+
+    protected void setRightTriggerDeployed(boolean out) {
+        _rightTrigger.setPosition(out ? TRIGGER_RIGHT_POS_OUT: TRIGGER_RIGHT_POS_IN);
+    }
+
 	protected void setPowerScaled(double leftPower, double rightPower) {
 
         rightPower = Range.clip(rightPower, -1, 1);
         leftPower  = Range.clip(leftPower, -1, 1);
 
         rightPower = scaleInput(rightPower);
-        leftPower =  scaleInput(leftPower);
+        leftPower = scaleInput(leftPower);
 
         this.setPower(leftPower, rightPower);
 	}

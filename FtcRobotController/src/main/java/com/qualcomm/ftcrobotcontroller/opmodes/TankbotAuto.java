@@ -54,10 +54,10 @@ public class TankbotAuto extends TankbotBase {
 
     @Override
     public void TBInit() {
-        _wheelControllerLeft = hardwareMap.dcMotorController.get("wheelMotorController");
+        _wheelControllerLeft = hardwareMap.dcMotorController.get("frontMotors");
         _wheelControllerLeft.setMotorControllerDeviceMode(DcMotorController.DeviceMode.WRITE_ONLY);
 
-        _wheelControllerRight = hardwareMap.dcMotorController.get("wheelMotorController");
+        _wheelControllerRight = hardwareMap.dcMotorController.get("rearMotor");
         _wheelControllerRight.setMotorControllerDeviceMode(DcMotorController.DeviceMode.WRITE_ONLY);
     }
 
