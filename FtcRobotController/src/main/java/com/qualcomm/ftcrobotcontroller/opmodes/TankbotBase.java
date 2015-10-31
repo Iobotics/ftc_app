@@ -117,6 +117,8 @@ public abstract class TankbotBase extends OpMode {
         _leftTrigger  = hardwareMap.servo.get("leftTrigger");
         this.setLeftTriggerDeployed(false);
 
+        _rightTrigger.setDirection(Servo.Direction.REVERSE);
+
         this.setHasRearEncoders(true);
         this.TBInit();
 	}
