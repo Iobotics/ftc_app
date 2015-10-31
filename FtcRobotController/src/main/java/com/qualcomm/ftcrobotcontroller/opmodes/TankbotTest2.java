@@ -3,6 +3,7 @@ package com.qualcomm.ftcrobotcontroller.opmodes;
 import com.qualcomm.robotcore.eventloop.opmode.OpMode;
 import com.qualcomm.robotcore.hardware.DcMotor;
 import com.qualcomm.robotcore.hardware.DcMotorController;
+import com.qualcomm.robotcore.hardware.Servo;
 
 /**
  * Created by Student on 10/30/2015.
@@ -14,7 +15,9 @@ public class TankbotTest2 extends OpMode {
     DcMotor _motorLeftFront;
     DcMotor _motorLeftRear;
 
-    DcMotorController wheelControllerFront;
+    DcMotorController _wheelControllerFront;
+
+    Servo _manServo;
 
     @Override
     public void init() {
@@ -23,15 +26,20 @@ public class TankbotTest2 extends OpMode {
         _motorLeftFront = hardwareMap.dcMotor.get("leftFront");
         _motorLeftRear = hardwareMap.dcMotor.get("leftRear");
 
-        wheelControllerFront = hardwareMap.dcMotorController.get("wheelMotorFront");
-        wheelControllerFront.setMotorControllerDeviceMode(DcMotorController.DeviceMode.READ_ONLY);
+        _manServo = hardwareMap.servo.get("manServo");
+
+        _wheelControllerFront = hardwareMap.dcMotorController.get("wheelMotorFront");
+        _wheelControllerFront.setMotorControllerDeviceMode(DcMotorController.DeviceMode.READ_ONLY);
     }
 
     @Override
     public void loop() {
-        while(wheelControllerFront.getMotorControllerDeviceMode() == DcMotorController.DeviceMode.READ_ONLY) {
+        if(_wheelControllerFront.getMotorControllerDeviceMode() == DcMotorController.DeviceMode.READ_ONLY) {
             telemetry.addData("Left encoder", _motorLeftFront.getCurrentPosition());
             telemetry.addData("Right encoder", _motorRightFront.getCurrentPosition());
         }
+        float pos = (gamepad1.left_stick_y + 1) / 2;
+        _manServo.setPosition(pos);
+        telemetry.addData("ServoPos", pos);
     }
 }

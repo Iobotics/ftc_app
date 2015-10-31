@@ -46,54 +46,16 @@ import com.qualcomm.robotcore.util.Range;
  * <p>
  * Enables control of the robot via the gamepad
  */
-public class TankbotTeleOp extends OpMode {
-
-    // dead reckoning information //
-    //final static int    ENCODER_TICKS_PER_REV = 1120; // Neverest 40
-    //final static int    WHEEL_DIAMETER        = 6;    // inches / REV
-    //final static double INCHES_PER_TICK       = (WHEEL_DIAMETER * Math.PI) / ENCODER_TICKS_PER_REV;
-
-    // hardware instances //
-    DcMotor _motorRightFront;
-    DcMotor _motorRightRear;
-    DcMotor _motorLeftFront;
-    DcMotor _motorLeftRear;
-
-    //Servo _leftServo, _rightServo;
-
-    //OpticalDistanceSensor _sensorODS;
-    //LightSensor _sensorLego;
-
+public class TankbotTeleOp extends TankbotBase {
 
     @Override
-    public void init() {
-        _motorRightFront = hardwareMap.dcMotor.get("rightFront");
-        _motorRightRear  = hardwareMap.dcMotor.get("rightRear");
-        _motorLeftFront = hardwareMap.dcMotor.get("leftFront");
-        _motorLeftRear = hardwareMap.dcMotor.get("leftRear");
-
-        _motorLeftFront.setDirection(DcMotor.Direction.REVERSE);
-        _motorLeftRear.setDirection(DcMotor.Direction.REVERSE);
-
-        /*
-        _sensorODS = hardwareMap.opticalDistanceSensor.get("ods");
-        _sensorLego = hardwareMap.lightSensor.get("light");
-
-        _manServo = hardwareMap.servo.get("manServo");
-        _leftServo = hardwareMap.servo.get("leftMotor");
-        _rightServo = hardwareMap.servo.get("rightMotor");
-        _rightServo.setDirection(Servo.Direction.REVERSE);
-        */
+    public void TBStart() {
+        this.setManServoPosition(ManServoPosition.HOME);
+        this.runWithoutEncoders();
     }
 
     @Override
-    public void start() {
-        //this.setEncoderMode(DcMotorController.RunMode.RUN_WITHOUT_ENCODERS);
-
-    }
-
-    @Override
-    public void loop() {
+    public void TBLoop() {
 
         /*float pos = (gamepad1.left_stick_y + 1) / 2;
         _manServo.setPosition(pos);
@@ -101,10 +63,18 @@ public class TankbotTeleOp extends OpMode {
         double left  = -gamepad1.left_stick_y;
         double right = -gamepad1.right_stick_y;
 
-        setPowerScaled(left, right);
+        this.setPowerScaled(left, right);
 
         //_leftServo.setPosition(left);
         //_rightServo.setPosition(right);
+
+        if(gamepad1.y) {
+            this.setManServoPosition(ManServoPosition.DEPLOY);
+        } else if(gamepad1.b){
+            this.setManServoPosition(ManServoPosition.HOME);
+        } else if(gamepad1.a) {
+            this.setManServoPosition(ManServoPosition.PARK);
+        }
 
         telemetry.addData("Text", "*** Robot Data***");
         /*telemetry.addData("Left", left);
@@ -112,33 +82,4 @@ public class TankbotTeleOp extends OpMode {
         telemetry.addData("left rear  ", _motorLeftRear.getCurrentPosition());
         telemetry.addData("right rear ", _motorRightRear.getCurrentPosition());*/
     }
-
-    @Override
-    public void stop() {
-
-    }
-
-    private void setPowerScaled(double left, double right) {
-        left  = Range.clip(left, -1, 1);
-        right = Range.clip(right, -1, 1);
-
-        //left  = scalePower(left);
-        //right = scalePower(right);
-
-        setPower(left, right);
-    }
-
-    private void setPower(double left, double right) {
-        _motorRightFront.setPower(right);
-        _motorRightRear.setPower(right);
-        _motorLeftFront.setPower(left);
-        _motorLeftRear.setPower(left);
-    }
-
-    /*private void setEncoderMode(DcMotorController.RunMode mode) {
-        _motorLeftFront.setChannelMode(mode);
-        _motorRightFront.setChannelMode(mode);
-        _motorLeftRear.setChannelMode(mode);
-        _motorRightRear.setChannelMode(mode);
-    }*/
 }

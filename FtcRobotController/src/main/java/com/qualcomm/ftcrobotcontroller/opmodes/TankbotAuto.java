@@ -15,25 +15,13 @@ import com.qualcomm.robotcore.util.ElapsedTime;
 /**
  * Created by Student on 10/30/2015.
  */
-public class TankbotAuto extends OpMode {
-    final static int    ENCODER_TICKS_PER_REV = 1120; // Neverest 40
-    final static int    WHEEL_DIAMETER        = 2;    // inches / REV... we're using tank treads so this is really a gear diameter
-    final static double INCHES_PER_TICK       = (WHEEL_DIAMETER * Math.PI) / ENCODER_TICKS_PER_REV;
+public class TankbotAuto extends TankbotBase {
 
     private static final double RUN_POWER  = 0.25;
     private static final double TURN_POWER = 0.50;
 
-    final static double MAN_SERVO_POS_HOME   = 0.0;
-    final static double MAN_SERVO_POS_DEPLOY = 1.0;
-
-    // Motors //
-    DcMotor _motorRightFront;
-    DcMotor _motorRightRear;
-    DcMotor _motorLeftFront;
-    DcMotor _motorLeftRear;
-
-    DcMotorController wheelControllerLeft;
-    DcMotorController wheelControllerRight;
+    DcMotorController _wheelControllerLeft;
+    DcMotorController _wheelControllerRight;
 
     private enum States {
         START,
@@ -53,11 +41,6 @@ public class TankbotAuto extends OpMode {
         WRITE
     }
 
-    private enum ManServoPosition {
-        HOME,
-        DEPLOY
-    }
-
     private States _state;
     private States _nextState;
     private StateModes _stateMode;
@@ -69,38 +52,24 @@ public class TankbotAuto extends OpMode {
     private double _nextTarget;
     private final ElapsedTime _time = new ElapsedTime();
 
-    Servo _manServo;
-
     @Override
-    public void init() {
-        _motorRightFront = hardwareMap.dcMotor.get("rightFront");
-        _motorRightRear  = hardwareMap.dcMotor.get("rightRear");
-        _motorLeftFront = hardwareMap.dcMotor.get("leftFront");
-        _motorLeftRear = hardwareMap.dcMotor.get("leftRear");
+    public void TBInit() {
+        _wheelControllerLeft = hardwareMap.dcMotorController.get("wheelMotorController");
+        _wheelControllerLeft.setMotorControllerDeviceMode(DcMotorController.DeviceMode.WRITE_ONLY);
 
-        _motorLeftFront.setDirection(DcMotor.Direction.REVERSE);
-        _motorLeftRear.setDirection(DcMotor.Direction.REVERSE);
-
-        _manServo = hardwareMap.servo.get("manServo");
-
-        this.setManServoPosition(ManServoPosition.HOME);
-
-        wheelControllerLeft = hardwareMap.dcMotorController.get("wheelMotorController");
-        wheelControllerLeft.setMotorControllerDeviceMode(DcMotorController.DeviceMode.WRITE_ONLY);
-
-        wheelControllerRight = hardwareMap.dcMotorController.get("wheelMotorController");
-        wheelControllerRight.setMotorControllerDeviceMode(DcMotorController.DeviceMode.WRITE_ONLY);
+        _wheelControllerRight = hardwareMap.dcMotorController.get("wheelMotorController");
+        _wheelControllerRight.setMotorControllerDeviceMode(DcMotorController.DeviceMode.WRITE_ONLY);
     }
 
     @Override
-    public void start() {
+    public void TBStart() {
         _state = States.START;
         _stateMode = StateModes.READ;
         _time.reset();
     }
 
     @Override
-    public void loop() {
+    public void TBLoop() {
         telemetry.addData("State", _state.name());
 
         switch(_state) {
@@ -118,8 +87,8 @@ public class TankbotAuto extends OpMode {
                         this._leftPositionInches = this.getLeftPositionInches();
                         this._rightPositionInches = this.getRightPositionInches();
 
-                        wheelControllerRight.setMotorControllerDeviceMode(DcMotorController.DeviceMode.WRITE_ONLY);
-                        wheelControllerLeft.setMotorControllerDeviceMode(DcMotorController.DeviceMode.WRITE_ONLY);
+                        _wheelControllerRight.setMotorControllerDeviceMode(DcMotorController.DeviceMode.WRITE_ONLY);
+                        _wheelControllerLeft.setMotorControllerDeviceMode(DcMotorController.DeviceMode.WRITE_ONLY);
                         _stateMode = StateModes.WRITE;
                         break;
                     case WRITE:
@@ -136,8 +105,8 @@ public class TankbotAuto extends OpMode {
                             _nextTarget = 15;
                         }
 
-                        wheelControllerRight.setMotorControllerDeviceMode(DcMotorController.DeviceMode.READ_ONLY);
-                        wheelControllerLeft.setMotorControllerDeviceMode(DcMotorController.DeviceMode.READ_ONLY);
+                        _wheelControllerRight.setMotorControllerDeviceMode(DcMotorController.DeviceMode.READ_ONLY);
+                        _wheelControllerLeft.setMotorControllerDeviceMode(DcMotorController.DeviceMode.READ_ONLY);
                         _stateMode = StateModes.READ;
                         break;
                 }
@@ -147,8 +116,8 @@ public class TankbotAuto extends OpMode {
                     case READ:
                         this._leftPositionInches = this.getLeftPositionInches();
 
-                        wheelControllerRight.setMotorControllerDeviceMode(DcMotorController.DeviceMode.WRITE_ONLY);
-                        wheelControllerLeft.setMotorControllerDeviceMode(DcMotorController.DeviceMode.WRITE_ONLY);
+                        _wheelControllerRight.setMotorControllerDeviceMode(DcMotorController.DeviceMode.WRITE_ONLY);
+                        _wheelControllerLeft.setMotorControllerDeviceMode(DcMotorController.DeviceMode.WRITE_ONLY);
                         _stateMode = StateModes.WRITE;
                         break;
                     case WRITE:
@@ -164,8 +133,8 @@ public class TankbotAuto extends OpMode {
                             _nextTarget  = 5;
                         }
 
-                        wheelControllerRight.setMotorControllerDeviceMode(DcMotorController.DeviceMode.READ_ONLY);
-                        wheelControllerLeft.setMotorControllerDeviceMode(DcMotorController.DeviceMode.READ_ONLY);
+                        _wheelControllerRight.setMotorControllerDeviceMode(DcMotorController.DeviceMode.READ_ONLY);
+                        _wheelControllerLeft.setMotorControllerDeviceMode(DcMotorController.DeviceMode.READ_ONLY);
                         _stateMode = StateModes.READ;
                         break;
                 }
@@ -173,16 +142,16 @@ public class TankbotAuto extends OpMode {
             case DRIVE_FORWARD2:
                 switch(_stateMode) {
                     case READ:
-                        this._leftPositionInches = this.getLeftPositionInches();
-                        this._rightPositionInches = this.getRightPositionInches();
+                        _leftPositionInches = this.getLeftPositionInches();
+                        _rightPositionInches = this.getRightPositionInches();
 
-                        wheelControllerRight.setMotorControllerDeviceMode(DcMotorController.DeviceMode.WRITE_ONLY);
-                        wheelControllerLeft.setMotorControllerDeviceMode(DcMotorController.DeviceMode.WRITE_ONLY);
+                        _wheelControllerRight.setMotorControllerDeviceMode(DcMotorController.DeviceMode.WRITE_ONLY);
+                        _wheelControllerLeft.setMotorControllerDeviceMode(DcMotorController.DeviceMode.WRITE_ONLY);
                         _stateMode = StateModes.WRITE;
                         break;
                     case WRITE:
                         this.setPower(RUN_POWER, RUN_POWER);
-                        if(this._leftPositionInches >= _targetValue && this._rightPositionInches >= _targetValue) {
+                        if(_leftPositionInches >= _targetValue && _rightPositionInches >= _targetValue) {
                             this.setPower(0, 0);
                             this.resetEncoders();
 
@@ -191,16 +160,16 @@ public class TankbotAuto extends OpMode {
                             _targetValue = _time.time() + 1;
                             _nextState   = States.DEPLOY_MAN;
                         }
-                        wheelControllerRight.setMotorControllerDeviceMode(DcMotorController.DeviceMode.READ_ONLY);
-                        wheelControllerLeft.setMotorControllerDeviceMode(DcMotorController.DeviceMode.READ_ONLY);
+                        _wheelControllerRight.setMotorControllerDeviceMode(DcMotorController.DeviceMode.READ_ONLY);
+                        _wheelControllerLeft.setMotorControllerDeviceMode(DcMotorController.DeviceMode.READ_ONLY);
                         _stateMode = StateModes.READ;
                         break;
                 }
                 break;
             case DEPLOY_MAN:
                 _stateMode = StateModes.WRITE;
-                wheelControllerRight.setMotorControllerDeviceMode(DcMotorController.DeviceMode.WRITE_ONLY); //Putting this here is a messy solution but should work
-                wheelControllerLeft.setMotorControllerDeviceMode(DcMotorController.DeviceMode.WRITE_ONLY);
+                _wheelControllerRight.setMotorControllerDeviceMode(DcMotorController.DeviceMode.WRITE_ONLY); //Putting this here is a messy solution but should work
+                _wheelControllerLeft.setMotorControllerDeviceMode(DcMotorController.DeviceMode.WRITE_ONLY);
                 this.setManServoPosition(ManServoPosition.DEPLOY);
 
                 // wait for 2 seconds, reset man //
@@ -216,11 +185,11 @@ public class TankbotAuto extends OpMode {
             case DRIVE_REVERSE:
                 switch(_stateMode){
                     case READ:
-                        this._leftPositionInches = this.getLeftPositionInches();
-                        this._rightPositionInches = this.getRightPositionInches();
+                        _leftPositionInches = this.getLeftPositionInches();
+                        _rightPositionInches = this.getRightPositionInches();
 
-                        wheelControllerRight.setMotorControllerDeviceMode(DcMotorController.DeviceMode.WRITE_ONLY);
-                        wheelControllerLeft.setMotorControllerDeviceMode(DcMotorController.DeviceMode.WRITE_ONLY);
+                        _wheelControllerRight.setMotorControllerDeviceMode(DcMotorController.DeviceMode.WRITE_ONLY);
+                        _wheelControllerLeft.setMotorControllerDeviceMode(DcMotorController.DeviceMode.WRITE_ONLY);
                         _stateMode = StateModes.WRITE;
                         break;
                     case WRITE:
@@ -233,8 +202,8 @@ public class TankbotAuto extends OpMode {
                             _state = States.STOP; //Cutting out button pusher because of lack of hardware support
                         }
 
-                        wheelControllerRight.setMotorControllerDeviceMode(DcMotorController.DeviceMode.READ_ONLY);
-                        wheelControllerLeft.setMotorControllerDeviceMode(DcMotorController.DeviceMode.READ_ONLY);
+                        _wheelControllerRight.setMotorControllerDeviceMode(DcMotorController.DeviceMode.READ_ONLY);
+                        _wheelControllerLeft.setMotorControllerDeviceMode(DcMotorController.DeviceMode.READ_ONLY);
                         _stateMode = StateModes.READ;
                         break;
                 }
@@ -249,47 +218,6 @@ public class TankbotAuto extends OpMode {
             case STOP:
                 this.resetEncoders();
                 //this.runWithoutEncoders();
-                break;
-        }
-    }
-
-    private void resetEncoders() {
-        _motorLeftFront.setChannelMode(DcMotorController.RunMode.RESET_ENCODERS);
-        _motorRightFront.setChannelMode(DcMotorController.RunMode.RESET_ENCODERS);
-    }
-
-    private void setPower(double powerLeft, double powerRight) {
-        _motorLeftFront.setPower(powerLeft);
-        _motorLeftRear.setPower(powerLeft);
-        _motorRightFront.setPower(powerRight);
-        _motorRightRear.setPower(powerRight);
-    }
-
-    private int getLeftEncoder() {
-        int pos = _motorLeftFront.getCurrentPosition();
-        return pos;
-    }
-
-    private int getRightEncoder() {
-        int pos = _motorRightFront.getCurrentPosition();
-        return pos;
-    }
-
-    private double getLeftPositionInches() {
-        return this.getLeftEncoder() * this.INCHES_PER_TICK;
-    }
-
-    private double getRightPositionInches() {
-        return this.getRightEncoder() * this.INCHES_PER_TICK;
-    }
-
-    private void setManServoPosition(ManServoPosition pos) {
-        switch (pos) {
-            case HOME:
-                _manServo.setPosition(MAN_SERVO_POS_HOME);
-                break;
-            case DEPLOY:
-                _manServo.setPosition(MAN_SERVO_POS_DEPLOY);
                 break;
         }
     }
