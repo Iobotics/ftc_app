@@ -327,7 +327,7 @@ public abstract class SuperK9Base extends OpMode {
         return (_plowMotor.getPosition() - 1) * 2;
     }
 
-    // positive is deploy, negative retract //
+    // negative is deploy, positive retract //
     protected void setPlowPower(double power) {
         power = (Range.clip(power, PLOW_POWER_MIN, PLOW_POWER_MAX) + 1) / 2;
         _plowMotor.setPosition(power);

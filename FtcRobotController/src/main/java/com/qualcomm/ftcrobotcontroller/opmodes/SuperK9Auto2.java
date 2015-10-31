@@ -31,17 +31,7 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE. */
 
 package com.qualcomm.ftcrobotcontroller.opmodes;
 
-import android.graphics.Color;
-
-import com.qualcomm.robotcore.eventloop.opmode.OpMode;
-import com.qualcomm.robotcore.hardware.ColorSensor;
-import com.qualcomm.robotcore.hardware.DcMotor;
-import com.qualcomm.robotcore.hardware.DeviceInterfaceModule;
-import com.qualcomm.robotcore.hardware.DigitalChannelController;
-import com.qualcomm.robotcore.hardware.LightSensor;
-import com.qualcomm.robotcore.hardware.OpticalDistanceSensor;
 import com.qualcomm.robotcore.util.ElapsedTime;
-import com.qualcomm.robotcore.util.Range;
 
 //import com.qualcomm.robotcore.hardware.Servo;
 
@@ -50,7 +40,7 @@ import com.qualcomm.robotcore.util.Range;
  * <p>
  * Enables control of the robot via the gamepad
  */
-public class SuperK9Auto extends SuperK9Base {
+public class SuperK9Auto2 extends SuperK9Base {
 
     private static final double RUN_POWER  = 0.25;
     private static final double TURN_POWER = 0.50;
@@ -86,7 +76,7 @@ public class SuperK9Auto extends SuperK9Base {
     private final FtcColor _robotColor;
     private FtcColor _sensorColor;
 
-    public SuperK9Auto(FtcColor robotColor) {
+    public SuperK9Auto2(FtcColor robotColor) {
         _robotColor = robotColor;
     }
 
