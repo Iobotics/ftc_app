@@ -71,8 +71,8 @@ public abstract class TankbotBase extends OpMode {
     final static double TRIGGER_LEFT_POS_IN  = 0.5;
     final static double TRIGGER_LEFT_POS_OUT = 0.03;
 
-    final static double TRIGGER_RIGHT_POS_IN  = 0.03;
-    final static double TRIGGER_RIGHT_POS_OUT = 0.5;
+    final static double TRIGGER_RIGHT_POS_IN  = 0.5;
+    final static double TRIGGER_RIGHT_POS_OUT = 0.03;
 
     protected enum FtcColor {
         RED,
@@ -113,11 +113,10 @@ public abstract class TankbotBase extends OpMode {
         this.setManServoPosition(ManServoPosition.HOME);
 
         _rightTrigger = hardwareMap.servo.get("rightTrigger");
+        _rightTrigger.setDirection(Servo.Direction.REVERSE);
         this.setRightTriggerDeployed(false);
         _leftTrigger  = hardwareMap.servo.get("leftTrigger");
         this.setLeftTriggerDeployed(false);
-
-        _rightTrigger.setDirection(Servo.Direction.REVERSE);
 
         this.setHasRearEncoders(true);
         this.TBInit();
