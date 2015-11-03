@@ -44,6 +44,7 @@ import com.qualcomm.robotcore.hardware.LightSensor;
 import com.qualcomm.robotcore.hardware.OpticalDistanceSensor;
 import com.qualcomm.robotcore.hardware.Servo;
 import com.qualcomm.robotcore.hardware.configuration.Utility;
+import com.qualcomm.robotcore.util.ElapsedTime;
 import com.qualcomm.robotcore.util.Range;
 
 //import com.qualcomm.robotcore.hardware.Servo;
@@ -114,6 +115,7 @@ public abstract class SuperK9Base extends OpMode {
 	ColorSensor _sensorRGB;
 	OpticalDistanceSensor _sensorODS;
 	LightSensor _sensorLego;
+    final ElapsedTime _time = new ElapsedTime();
 
     boolean _hasRearEncoders = false;
     int _leftEncoderOffset  = 0;
@@ -179,6 +181,7 @@ public abstract class SuperK9Base extends OpMode {
      */
     @Override
     public void start() {
+        _time.reset();
         this.k9Start();
     }
 
@@ -399,7 +402,7 @@ public abstract class SuperK9Base extends OpMode {
         return _sensorLego.getLightDetected();
     }
 
-    private int sign(double value) {
+    protected int sign(double value) {
         return value > 0? 1: value < 0? -1: 0;
     }
 
@@ -434,5 +437,103 @@ public abstract class SuperK9Base extends OpMode {
 
 		return dScale;
 	}
+
+    /**
+     *  Auto Command inner state machine. Use these for actions that require continually testing
+     *  sensors or persistent state between loop invocations.
+     */
+    private enum AutoCommandState {
+        NONE,
+        DRIVE,
+        TURN,
+        WAIT
+    }
+    private AutoCommandState _commandState = AutoCommandState.NONE;
+
+    protected void autoEnd() {
+        _commandState = AutoCommandState.NONE;
+    }
+
+    protected boolean autoDriveDistance(double inches, double speed) {
+        if(speed < 0) throw new IllegalArgumentException("speed: " + speed);
+        speed = Range.clip(speed, 0, 1.0);
+        switch(_commandState) {
+            case NONE:
+                this.resetEncoders();
+                this.setPower(0, 0);
+                _commandState = AutoCommandState.DRIVE;
+                break;
+            case DRIVE:
+                this.runWithEncoders();
+                this.setPower(this.sign(inches) * speed, this.sign(inches) * speed);
+                // check if we are at target distance //
+                double left  = this.getLeftPositionInches();
+                double right = this.getRightPositionInches();
+                if(  (inches >= 0 && left >= inches && right >= inches)
+                        || (inches < 0  && left <= inches && right <= inches))
+                {
+                    this.setPower(0, 0);
+                    _commandState = AutoCommandState.NONE;
+                    return true;
+                }
+                break;
+            default:
+                throw new IllegalStateException("drive called without ending previous command: " + _commandState);
+        }
+        return false;
+    }
+
+    // negative is clockwise, positive is counterclockwise //
+    protected boolean autoTurnPivot(double inches, double speed) {
+        if(speed < 0) throw new IllegalArgumentException("speed: " + speed);
+        speed = Range.clip(speed, 0, 1.0);
+        switch(_commandState) {
+            case NONE:
+                this.resetEncoders();
+                this.setPower(0, 0);
+                _commandState = AutoCommandState.TURN;
+                break;
+            case TURN:
+                this.runWithEncoders();
+                double current = 0;
+                if(inches >= 0) {
+                    this.setPower(0, speed);
+                    current = this.getRightPositionInches();
+                } else {
+                    this.setPower(speed, 0);
+                    current = this.getLeftPositionInches();
+                }
+                if(current >= inches) {
+                    this.setPower(0, 0);
+                    _commandState = AutoCommandState.NONE;
+                    return true;
+                }
+                break;
+            default:
+                throw new IllegalStateException("turn called without ending previous command: " + _commandState);
+        }
+        return false;
+    }
+
+    // wait for a specific number of seconds //
+    private double _autoWaitStart = 0;
+    protected boolean autoWaitSeconds(double seconds) {
+        if(seconds < 0) throw new IllegalArgumentException("seconds: " + seconds);
+        switch(_commandState) {
+            case NONE:
+                _autoWaitStart = _time.time();
+                _commandState  = AutoCommandState.WAIT;
+                break;
+            case WAIT:
+                if(_time.time() > _autoWaitStart + seconds) {
+                    _commandState = AutoCommandState.NONE;
+                    return true;
+                }
+                break;
+            default:
+                throw new IllegalStateException("wait called without ending previous command: " + _commandState);
+        }
+        return false;
+    }
 
 }
