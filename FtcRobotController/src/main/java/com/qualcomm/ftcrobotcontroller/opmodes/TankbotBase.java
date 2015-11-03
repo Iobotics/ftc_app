@@ -71,8 +71,8 @@ public abstract class TankbotBase extends OpMode {
     final static double TRIGGER_LEFT_POS_IN  = 0.5;
     final static double TRIGGER_LEFT_POS_OUT = 0.03;
 
-    final static double TRIGGER_RIGHT_POS_IN  = 0.5;
-    final static double TRIGGER_RIGHT_POS_OUT = 0.03;
+    final static double TRIGGER_RIGHT_POS_IN  = 0.03;
+    final static double TRIGGER_RIGHT_POS_OUT = 0.5;
 
     protected enum FtcColor {
         RED,
