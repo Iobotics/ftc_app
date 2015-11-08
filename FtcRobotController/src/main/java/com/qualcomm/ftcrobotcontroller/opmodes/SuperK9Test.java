@@ -114,9 +114,9 @@ public class SuperK9Test extends OpMode {
     }
 
     private void setEncoderMode(DcMotorController.RunMode mode) {
-        _motorLeftFront.setChannelMode(mode);
-        _motorRightFront.setChannelMode(mode);
-        _motorLeftRear.setChannelMode(mode);
-        _motorRightRear.setChannelMode(mode);
+        _motorLeftFront.setMode(mode);
+        _motorRightFront.setMode(mode);
+        _motorLeftRear.setMode(mode);
+        _motorRightRear.setMode(mode);
     }
 }
