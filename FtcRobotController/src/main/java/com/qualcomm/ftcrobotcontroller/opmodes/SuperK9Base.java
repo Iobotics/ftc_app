@@ -111,6 +111,15 @@ public abstract class SuperK9Base extends OpMode {
     Servo _plowMotor;
     Servo _dozerMotor;
 
+    Servo _leftTrigger;
+    Servo _rightTrigger;
+
+    final static double TRIGGER_LEFT_POS_IN  = 0.62;
+    final static double TRIGGER_LEFT_POS_OUT = 0.0;
+
+    final static double TRIGGER_RIGHT_POS_IN  = 0.4;
+    final static double TRIGGER_RIGHT_POS_OUT = 1.0;
+
 	DeviceInterfaceModule _cdim;
 	ColorSensor _sensorRGB;
 	OpticalDistanceSensor _sensorODS;
@@ -153,6 +162,12 @@ public abstract class SuperK9Base extends OpMode {
         _buttonServo = hardwareMap.servo.get("buttonServo");
         _buttonServo.setDirection(Servo.Direction.REVERSE);
         this.setButtonServoPosition(ButtonServoPosition.CENTER);
+
+        _rightTrigger = hardwareMap.servo.get("rightTrigger");
+        _rightTrigger.setDirection(Servo.Direction.REVERSE);
+        this.setRightTriggerDeployed(false);
+        _leftTrigger  = hardwareMap.servo.get("leftTrigger");
+        this.setLeftTriggerDeployed(false);
 
         _manServo = hardwareMap.servo.get("manServo");
         this.setManServoPosition(ManServoPosition.HOME);
@@ -352,6 +367,22 @@ public abstract class SuperK9Base extends OpMode {
                 _manServo.setPosition(MAN_SERVO_POS_PARK);
                 break;
         }
+    }
+
+    protected boolean getLeftTriggerDeployed() {
+        return _leftTrigger.getPosition() == TRIGGER_LEFT_POS_OUT;
+    }
+
+    protected void setLeftTriggerDeployed(boolean out) {
+        _leftTrigger.setPosition(out ? TRIGGER_LEFT_POS_OUT: TRIGGER_LEFT_POS_IN);
+    }
+
+    protected boolean getRightTriggerDeployed() {
+        return _rightTrigger.getPosition() == TRIGGER_RIGHT_POS_OUT;
+    }
+
+    protected void setRightTriggerDeployed(boolean out) {
+        _rightTrigger.setPosition(out ? TRIGGER_RIGHT_POS_OUT: TRIGGER_RIGHT_POS_IN);
     }
 
     protected double getPlowPower() {

@@ -83,13 +83,23 @@ public class SuperK9TeleOp extends SuperK9Base {
 		float right = -gamepad1.right_stick_y;
 		this.setPowerScaled(left, right);
 
-        ButtonServoPosition pos = gamepad1.dpad_left? ButtonServoPosition.LEFT: gamepad1.dpad_right? ButtonServoPosition.RIGHT: ButtonServoPosition.CENTER;
-        this.setButtonServoPosition(pos);
+        //ButtonServoPosition pos = gamepad1.dpad_left? ButtonServoPosition.LEFT: gamepad1.dpad_right? ButtonServoPosition.RIGHT: ButtonServoPosition.CENTER;
+        //this.setButtonServoPosition(pos);
+
+		if(gamepad1.dpad_left) {
+			this.setLeftTriggerDeployed(true);
+		} else if(gamepad1.dpad_right) {
+			this.setRightTriggerDeployed(true);
+		} else {
+			this.setLeftTriggerDeployed(false);
+			this.setRightTriggerDeployed(false);
+		}
 
         this.setColorSensorLED(gamepad1.b);
 
-		this.setPlowPower(gamepad1.left_bumper ? 1 : gamepad1.left_trigger > 0.5 ? -1 : 0);
-        this.setDozerPower(gamepad1.right_bumper? 1: gamepad1.right_trigger > 0.5? -1: 0);
+		this.setPlowPower(gamepad1.left_bumper?1:gamepad1.left_trigger>0.5?-1:0);
+
+		this.setDozerPower(gamepad1.right_bumper ? 1 : gamepad1.right_trigger > 0.5 ? -1 : 0);
         //telemetry.addData("trigger", gamepad1.right_trigger);
 
 		if(gamepad1.y) {

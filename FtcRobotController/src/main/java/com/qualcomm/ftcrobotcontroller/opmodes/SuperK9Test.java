@@ -65,6 +65,8 @@ public class SuperK9Test extends OpMode {
     Servo _manServo;
     Servo _plowServo;
     Servo _dozerServo;
+    Servo _leftTrigger;
+    Servo _rightTrigger;
 
     OpticalDistanceSensor _sensorODS;
     LightSensor _sensorLego;
@@ -80,13 +82,16 @@ public class SuperK9Test extends OpMode {
         _motorRightFront.setDirection(DcMotor.Direction.REVERSE);
         _motorRightRear.setDirection(DcMotor.Direction.REVERSE);
 
-        _sensorODS = hardwareMap.opticalDistanceSensor.get("ods");
-        _sensorLego = hardwareMap.lightSensor.get("light");
+        //_sensorODS = hardwareMap.opticalDistanceSensor.get("ods");
+        //_sensorLego = hardwareMap.lightSensor.get("light");
 
-        _manServo = hardwareMap.servo.get("manServo");
-        _buttonServo = hardwareMap.servo.get("buttonServo");
+        //_manServo = hardwareMap.servo.get("manServo");
+        //_buttonServo = hardwareMap.servo.get("buttonServo");
         _plowServo = hardwareMap.servo.get("plowMotor");
         _dozerServo = hardwareMap.servo.get("dozerMotor");
+
+        _leftTrigger = hardwareMap.servo.get("leftTrigger");
+        _rightTrigger = hardwareMap.servo.get("rightTrigger");
     }
 
     @Override
@@ -99,9 +104,17 @@ public class SuperK9Test extends OpMode {
     @Override
     public void loop() {
 
-        float pos = (gamepad1.left_stick_y + 1) / 2;
+        float leftPos = (gamepad1.left_stick_y + 1) / 2;
+        _leftTrigger.setPosition(leftPos);
+        telemetry.addData("LeftServoPos", leftPos);
+        float rightPos = (gamepad1.right_stick_y + 1) / 2;
+        _rightTrigger.setPosition(rightPos);
+        telemetry.addData("RightServoPos", rightPos);
+
+        /*float pos = (gamepad1.left_stick_y + 1) / 2;
         _manServo.setPosition(pos);
-        telemetry.addData("ServoPos", pos);
+        telemetry.addData("ServoPos", pos);*/
+
         /*telemetry.addData("left front ", _motorLeftFront.getCurrentPosition());
         telemetry.addData("right front", _motorRightFront.getCurrentPosition());
         telemetry.addData("left rear  ", _motorLeftRear.getCurrentPosition());
