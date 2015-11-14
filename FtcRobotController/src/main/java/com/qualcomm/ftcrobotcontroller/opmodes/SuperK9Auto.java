@@ -57,21 +57,21 @@ public class SuperK9Auto extends SuperK9Base {
 
     private enum States {
         START,
+        LOWER_PLOW,
         DRIVE_TO_BEACON_ZONE,
+        WAIT_FOR_TURN,
         TURN_TO_BEACON,
+        WAIT_TO_APPROACH,
         DRIVE_TO_BEACON,
-        WAIT_FOR_TIME,
+        WAIT_FOR_MAN,
         DEPLOY_MAN_DROPPER,
         RESET_MAN_DROPPER,
         READ_COLOR_SENSOR,
-        BACKUP_FOR_PUSH,
+        REVERSE_FOR_PUSH,
         SET_BUTTON_PUSHER,
         PUSH_BUTTON,
+        WAIT_FOR_BEACON,
         LEAVE_BEACON,
-        LOWER_PLOW,
-        RAISE_PLOW,
-        LOWER_DOZER,
-        RAISE_DOZER,
         STOP
     }
 
@@ -79,10 +79,6 @@ public class SuperK9Auto extends SuperK9Base {
     private static boolean _doBeacon = false;
 
     private States _state;
-    private States _nextState;
-    private double _targetValue;
-    private double _nextTarget;
-    private final ElapsedTime _time = new ElapsedTime();
     private final FtcColor _robotColor;
     private FtcColor _sensorColor;
     private AutoParameters _autoParams;
@@ -149,116 +145,76 @@ public class SuperK9Auto extends SuperK9Base {
     @Override
     protected void k9Start() {
         _state = States.START;
-        _time.reset();
     }
 
     @Override
     protected void k9Loop() {
-        telemetry.addData("State", _state.name() + " " + _targetValue);
-        telemetry.addData("Team Color", _robotColor);
+        telemetry.addData("State", _state.name());
         switch(_state) {
             case START:
-                this.resetEncoders();
-                this.setPower(0, 0);
-                this.setPlowPower(0);
-
                 _state = States.LOWER_PLOW;
-                _targetValue = 0;
                 break;
             case LOWER_PLOW:
-                if(_targetValue == 0) {
-                    this.setPlowPower(-1.0);
-                    _targetValue = _time.time() + 1.25;
-                    break;
-                }
-                if(_time.time() >= _targetValue) {
-                    this.setPlowPower(0);
+                this.setPlowPower(-1.0);
+                if(this.autoWaitSeconds(1.5)) {
+                    this.setPlowPower(0.0);
                     _state = States.DRIVE_TO_BEACON_ZONE;
-                    _targetValue = _autoParams.DistanceToBeaconZone;
                 }
                 break;
-            case DRIVE_TO_BEACON_ZONE: // reverse //
-                this.runWithEncoders();
-                this.setPower(-RUN_POWER, -RUN_POWER);
-                if(this.getLeftPositionInches() <= -_targetValue && this.getRightPositionInches() <= -_targetValue) {
-                    this.setPower(0, 0);
-                    this.resetEncoders();
-
-                    // wait for 1 second, turn right //
-                    _state = States.WAIT_FOR_TIME;
-                    _targetValue = _time.time() + 1;
-                    _nextState   = States.TURN_TO_BEACON;
-                    _nextTarget  = _autoParams.TurnToBeaconZone;
+            case DRIVE_TO_BEACON_ZONE:
+                if(this.autoDriveDistance(_autoParams.DistanceToBeaconZone, RUN_POWER)) {
+                    _state = States.WAIT_FOR_TURN;
+                }
+                break;
+            case WAIT_FOR_TURN:
+                if(this.autoWaitSeconds(1.0)) {
+                    _state = States.TURN_TO_BEACON;
                 }
                 break;
             case TURN_TO_BEACON:
-                this.runWithEncoders();
-                // blue -> turn right, red -> turn left //
-                if(_robotColor == FtcColor.BLUE) {
-                    // run right wheel in reverse, read right encoder //
-                    this.setPower(0, -TURN_POWER);
-                    _nextTarget = -this.getRightPositionInches();
-                } else {
-                    // run left wheel in reverse, read left encoder //
-                    this.setPower(-TURN_POWER, 0);
-                    _nextTarget = -this.getLeftPositionInches();
+                // turn left or right based on the robot color //
+                double beaconPivot = _robotColor == FtcColor.BLUE?
+                         _autoParams.TurnToBeaconZone:
+                        -_autoParams.TurnToBeaconZone;
+                if(this.autoTurnPivot(beaconPivot, TURN_POWER)) {
+                    _state = States.WAIT_TO_APPROACH;
                 }
-                if(_nextTarget > _targetValue) {
-                    this.setPower(0, 0);
-                    this.resetEncoders();
-
-                    // wait for 1 second, drive forward //
-                    _state = States.WAIT_FOR_TIME;
-                    _targetValue = _time.time() + 1;
-                    _nextState   = States.DRIVE_TO_BEACON;
-                    _nextTarget  = _autoParams.DistanceToBeacon;
+                break;
+            case WAIT_TO_APPROACH:
+                if(this.autoWaitSeconds(1.0)) {
+                    _state = States.DRIVE_TO_BEACON;
                 }
                 break;
             case DRIVE_TO_BEACON:
-                this.runWithEncoders();
-                this.setPower(-RUN_POWER, -RUN_POWER); // reverse //
-                if(this.getLeftPositionInches() <= -_targetValue && this.getRightPositionInches() <= -_targetValue) {
-                    this.setPower(0, 0);
-                    this.resetEncoders();
-
-                    // wait for 1 second, deploy man //
-                    _state = States.WAIT_FOR_TIME;
-                    _targetValue = _time.time() + 1;
-                    _nextState   = States.DEPLOY_MAN_DROPPER;
+                if(this.autoDriveDistance(_autoParams.DistanceToBeacon, RUN_POWER)) {
+                    _state = States.WAIT_FOR_MAN;
+                }
+                break;
+            case WAIT_FOR_MAN:
+                if(this.autoWaitSeconds(1.0)) {
+                    _state = States.DEPLOY_MAN_DROPPER;
                 }
                 break;
             case DEPLOY_MAN_DROPPER:
                 this.setManServoPosition(ManServoPosition.DEPLOY);
-
-                // wait for 2 seconds, reset man //
-                _state = States.WAIT_FOR_TIME;
-                _targetValue = _time.time() + 2;
-                _nextState   = States.RESET_MAN_DROPPER;
+                if(this.autoWaitSeconds(2.0)) {
+                    _state = States.RESET_MAN_DROPPER;
+                }
                 break;
             case RESET_MAN_DROPPER:
                 this.setManServoPosition(ManServoPosition.HOME);
                 if(_doBeacon) {
                     _state = States.READ_COLOR_SENSOR;
                 } else {
-                    _state = States.WAIT_FOR_TIME;
-                    _targetValue = _time.time() + 2;
-                    _nextState = States.LEAVE_BEACON;
-                    _nextTarget = _autoParams.DistanceToLeaveBeacon;
+                    _state = States.LEAVE_BEACON;
                 }
                 break;
             case READ_COLOR_SENSOR:
                 _sensorColor = this.getColorSensor();
-
-                _state       = States.BACKUP_FOR_PUSH;
-                _targetValue = _autoParams.DistanceToBeacon;
+                _state       = States.REVERSE_FOR_PUSH;
                 break;
-            case BACKUP_FOR_PUSH:
-                this.runWithEncoders();
-                this.setPower(RUN_POWER, RUN_POWER);
-                if(this.getLeftPositionInches() >= _targetValue && this.getRightPositionInches() >= _targetValue) {
-                    this.setPower(0, 0);
-                    this.resetEncoders();
-
+            case REVERSE_FOR_PUSH:
+                if(this.autoDriveDistance(_autoParams.DistanceToBeacon, RUN_POWER)) {
                     _state = States.SET_BUTTON_PUSHER;
                 }
                 break;
@@ -266,85 +222,27 @@ public class SuperK9Auto extends SuperK9Base {
                 // sensor senses the right half of the beacon //
                 // if we see our color, choose the right side, otherwise choose the left //
                 this.setButtonServoPosition(_sensorColor == _robotColor? ButtonServoPosition.RIGHT: ButtonServoPosition.LEFT);
-
-                // wait for half a second, drive forward //
-                _state = States.WAIT_FOR_TIME;
-                _targetValue = _time.time() + 0.5;
-                _nextState   = States.PUSH_BUTTON;
-                _nextTarget  = _autoParams.DistanceToBeacon;
+                if(this.autoWaitSeconds(0.5)) {
+                    _state = States.PUSH_BUTTON;
+                }
                 break;
             case PUSH_BUTTON:
-                this.runWithEncoders();
-                this.setPower(-RUN_POWER, -RUN_POWER); // reverse //
-                if(this.getLeftPositionInches() <= -_targetValue && this.getRightPositionInches() <= -_targetValue) {
-                    this.setPower(0, 0);
-                    this.resetEncoders();
-
-                    // wait for 1 second, reverse //
-                    _state = States.WAIT_FOR_TIME;
-                    _targetValue = _time.time() + 1;
-                    _nextState   = States.LEAVE_BEACON;
-                    _nextTarget  = _autoParams.DistanceToLeaveBeacon;
+                if(this.autoDriveDistance(_autoParams.DistanceToBeacon, RUN_POWER)) {
+                    _state = States.WAIT_FOR_BEACON;
+                }
+            case WAIT_FOR_BEACON:
+                if(this.autoWaitSeconds(1.0)) {
+                    this.setButtonServoPosition(ButtonServoPosition.CENTER);
+                    _state = States.LEAVE_BEACON;
                 }
                 break;
             case LEAVE_BEACON:
-                this.runWithEncoders();
-                this.setPower(RUN_POWER, RUN_POWER);
-                if(this.getLeftPositionInches() >= _targetValue && this.getRightPositionInches() >= _targetValue) {
-                    this.setPower(0, 0);
-                    this.resetEncoders();
-
+                if(this.autoDriveDistance(-_autoParams.DistanceToLeaveBeacon, RUN_POWER)) {
                     _state = States.STOP;
                 }
                 break;
-
-            case RAISE_PLOW:
-                if(_targetValue == 0) {
-                    this.setPlowPower(1.0);
-                    _targetValue = _time.time() + 1.25;
-                    break;
-                }
-                if(_time.time() >= _targetValue) {
-                    this.setPlowPower(0);
-                    _state = States.STOP; // fixme //
-                }
-                break;
-            case LOWER_DOZER:
-                if(_targetValue == 0) {
-                    this.setDozerPower(-1.0);
-                    _targetValue = _time.time() + 1.5;
-                    break;
-                }
-                if(_time.time() >= _targetValue) {
-                    this.setDozerPower(0);
-                    _state = States.STOP; // fixme //
-                }
-                break;
-            case RAISE_DOZER:
-                if(_targetValue == 0) {
-                    this.setDozerPower(1.0);
-                    _targetValue = _time.time() + 1.5;
-                    break;
-                }
-                if(_time.time() >= _targetValue) {
-                    this.setDozerPower(0);
-                    _state = States.STOP; // fixme //
-                }
-                break;
-
-            // Generic States //
-            case WAIT_FOR_TIME:
-                if(_time.time() >= _targetValue) {
-                    _state       = _nextState;
-                    _targetValue = _nextTarget;
-                }
-                break;
             case STOP:
-                this.resetEncoders();
-                this.setButtonServoPosition(ButtonServoPosition.CENTER);
-                //this.runWithoutEncoders();
                 break;
         }
-
     }
 }

@@ -526,7 +526,7 @@ public abstract class SuperK9Base extends OpMode {
                 break;
             case TURN:
                 this.runWithEncoders();
-                double current = 0;
+                double current;
                 if(inches >= 0) {
                     this.setPower(0, speed);
                     current = this.getRightPositionInches();
@@ -534,7 +534,7 @@ public abstract class SuperK9Base extends OpMode {
                     this.setPower(speed, 0);
                     current = this.getLeftPositionInches();
                 }
-                if(current >= inches) {
+                if(current >= Math.abs(inches)) {
                     this.setPower(0, 0);
                     _commandState = AutoCommandState.NONE;
                     return true;

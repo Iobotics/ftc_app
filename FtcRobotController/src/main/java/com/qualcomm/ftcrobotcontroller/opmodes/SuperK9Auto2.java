@@ -31,6 +31,8 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE. */
 
 package com.qualcomm.ftcrobotcontroller.opmodes;
 
+//import com.qualcomm.robotcore.hardware.Servo;
+
 /**
  * TeleOp Mode
  * <p>
@@ -40,73 +42,10 @@ public class SuperK9Auto2 extends SuperK9Base {
 
     private static final double RUN_POWER  = 0.25;
     private static final double TURN_POWER = 0.50;
+    private static final double LIGHT_THRESHOLD = 0.22;
 
-    private enum States {
-        START,
-        LOWER_PLOW,
-        DRIVE_TO_BEACON_ZONE,
-        WAIT_FOR_TURN,
-        TURN_TO_BEACON,
-        DRIVE_TO_BEACON,
-        WAIT_FOR_MAN,
-        DEPLOY_MAN_DROPPER,
-        RESET_MAN_DROPPER,
-        READ_COLOR_SENSOR,
-        REVERSE_FOR_PUSH,
-        SET_BUTTON_PUSHER,
-        PUSH_BUTTON,
-        WAIT_FOR_BEACON,
-        LEAVE_BEACON,
-        STOP
-    }
-
-    // change this to enable beacon pushing //
-    private static boolean _doBeacon = false;
-
-    private States _state;
     private final FtcColor _robotColor;
-    private FtcColor _sensorColor;
-    private AutoParameters _autoParams;
-
-    public static class AutoParameters {
-        private AutoParameters() { }
-        public double DistanceToBeaconZone;
-        public double TurnToBeaconZone;
-        public double DistanceToBeacon;
-        public double DistanceToLeaveBeacon;
-    }
-
-    public static final AutoParameters Auto8740Blue = new AutoParameters();
-    public static final AutoParameters Auto8740Red  = new AutoParameters();
-    public static final AutoParameters Auto8741Blue = new AutoParameters();
-    public static final AutoParameters Auto8741Red  = new AutoParameters();
-
-    static {
-        // Robot 8740 Blue //
-        Auto8740Blue.DistanceToBeaconZone  = 92.5;
-        Auto8740Blue.TurnToBeaconZone      = 20;
-        Auto8740Blue.DistanceToBeacon      = 7;
-        Auto8740Blue.DistanceToLeaveBeacon = 0;
-
-        // Robot 8740 Red //
-        Auto8740Red.DistanceToBeaconZone  = 89.5;
-        Auto8740Red.TurnToBeaconZone      = 25;
-        Auto8740Red.DistanceToBeacon      = 7;
-        Auto8740Red.DistanceToLeaveBeacon = 0;
-
-        // Robot 8741 Blue //
-        Auto8741Blue.DistanceToBeaconZone  = 90;
-        Auto8741Blue.TurnToBeaconZone      = 20;
-        Auto8741Blue.DistanceToBeacon      = 7;
-        Auto8741Blue.DistanceToLeaveBeacon = 0;
-
-        // Robot 8741 Red //
-        Auto8741Red.DistanceToBeaconZone  = 89;
-        Auto8741Red.TurnToBeaconZone      = 23;
-        Auto8741Red.DistanceToBeacon      = 7;
-        Auto8741Red.DistanceToLeaveBeacon = 0;
-
-    }
+    private boolean _running;
 
     public SuperK9Auto2(FtcColor robotColor) {
         _robotColor = robotColor;
@@ -114,112 +53,22 @@ public class SuperK9Auto2 extends SuperK9Base {
 
     @Override
     protected void k9Init() {
-        this.setManServoPosition(ManServoPosition.HOME);
 
-        // set parameters by team //
-        switch(this.getTeamNumber()) {
-            case TEAM_8740:
-                _autoParams = _robotColor == FtcColor.BLUE? Auto8740Blue: Auto8740Red;
-                break;
-            case TEAM_8741:
-                _autoParams = _robotColor == FtcColor.BLUE? Auto8741Blue: Auto8741Red;
-                break;
-        }
     }
 
     @Override
     protected void k9Start() {
-        _state = States.START;
+        this.runWithEncoders();
+        this.setPower(-RUN_POWER, -RUN_POWER);
+        _running = true;
     }
 
     @Override
     protected void k9Loop() {
-        telemetry.addData("State", _state.name());
-        switch(_state) {
-            case START:
-                _state = States.LOWER_PLOW;
-                break;
-            case LOWER_PLOW:
-                this.setPlowPower(-1.0);
-                if(this.autoWaitSeconds(1.5)) {
-                    _state = States.DRIVE_TO_BEACON_ZONE;
-                }
-                break;
-            case DRIVE_TO_BEACON_ZONE:
-                if(this.autoDriveDistance(_autoParams.DistanceToBeaconZone, RUN_POWER)) {
-                    _state = States.WAIT_FOR_TURN;
-                }
-                break;
-            case WAIT_FOR_TURN:
-                if(this.autoWaitSeconds(1.0)) {
-                    _state = States.TURN_TO_BEACON;
-                }
-                break;
-            case TURN_TO_BEACON:
-                double beaconPivot = _robotColor == FtcColor.BLUE?
-                         _autoParams.TurnToBeaconZone:
-                        -_autoParams.TurnToBeaconZone;
-                if(this.autoTurnPivot(beaconPivot, TURN_POWER)) {
-                    _state = States.DRIVE_TO_BEACON;
-                }
-                break;
-            case DRIVE_TO_BEACON:
-                if(this.autoDriveDistance(_autoParams.DistanceToBeacon, RUN_POWER)) {
-                    _state = States.WAIT_FOR_MAN;
-                }
-            case WAIT_FOR_MAN:
-                if(this.autoWaitSeconds(1.0)) {
-                    _state = States.DEPLOY_MAN_DROPPER;
-                }
-                break;
-            case DEPLOY_MAN_DROPPER:
-                this.setManServoPosition(ManServoPosition.DEPLOY);
-                if(this.autoWaitSeconds(2.0)) {
-                    _state = States.RESET_MAN_DROPPER;
-                }
-                break;
-            case RESET_MAN_DROPPER:
-                this.setManServoPosition(ManServoPosition.HOME);
-                if(_doBeacon) {
-                    _state = States.READ_COLOR_SENSOR;
-                } else {
-                    _state = States.LEAVE_BEACON;
-                }
-                break;
-            case READ_COLOR_SENSOR:
-                _sensorColor = this.getColorSensor();
-                _state       = States.REVERSE_FOR_PUSH;
-                break;
-            case REVERSE_FOR_PUSH:
-                if(this.autoDriveDistance(_autoParams.DistanceToBeacon, RUN_POWER)) {
-                    _state = States.SET_BUTTON_PUSHER;
-                }
-                break;
-            case SET_BUTTON_PUSHER:
-                // sensor senses the right half of the beacon //
-                // if we see our color, choose the right side, otherwise choose the left //
-                this.setButtonServoPosition(_sensorColor == _robotColor? ButtonServoPosition.RIGHT: ButtonServoPosition.LEFT);
-                if(this.autoWaitSeconds(0.5)) {
-                    _state = States.PUSH_BUTTON;
-                }
-                break;
-            case PUSH_BUTTON:
-                if(this.autoDriveDistance(_autoParams.DistanceToBeacon, RUN_POWER)) {
-                    _state = States.WAIT_FOR_BEACON;
-                }
-            case WAIT_FOR_BEACON:
-                if(this.autoWaitSeconds(1.0)) {
-                    this.setButtonServoPosition(ButtonServoPosition.CENTER);
-                    _state = States.LEAVE_BEACON;
-                }
-                break;
-            case LEAVE_BEACON:
-                if(this.autoDriveDistance(-_autoParams.DistanceToLeaveBeacon, RUN_POWER)) {
-                    _state = States.STOP;
-                }
-                break;
-            case STOP:
-                break;
+        telemetry.addData("Light", this.getLegoLight());
+        if(_running && this.getLegoLight() < LIGHT_THRESHOLD) {
+            this.setPower(0, 0);
+            _running = false;
         }
     }
 }

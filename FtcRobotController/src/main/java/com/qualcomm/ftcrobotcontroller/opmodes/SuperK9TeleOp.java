@@ -61,7 +61,8 @@ public class SuperK9TeleOp extends SuperK9Base {
 	@Override
 	public void k9Start() {
 		this.setManServoPosition(ManServoPosition.HOME);
-		this.runWithoutEncoders();
+		//this.runWithoutEncoders();
+        this.runWithEncoders();
 	}
 
 	/*
@@ -109,5 +110,7 @@ public class SuperK9TeleOp extends SuperK9Base {
 		} else if(gamepad1.a) {
 			this.setManServoPosition(ManServoPosition.PARK);
 		}
+
+		telemetry.addData("Light", this.getLegoLight());
 	}
 }
