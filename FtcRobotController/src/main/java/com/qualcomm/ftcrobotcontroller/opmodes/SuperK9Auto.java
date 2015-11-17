@@ -58,6 +58,9 @@ public class SuperK9Auto extends SuperK9Base {
     private enum States {
         START,
         LOWER_PLOW,
+        //DRIVE_TO_LINE,
+        //WAIT_FOR_ALIGN,
+        //ALIGN_TO_LINE,
         DRIVE_TO_BEACON_ZONE,
         WAIT_FOR_TURN,
         TURN_TO_BEACON,
@@ -158,9 +161,27 @@ public class SuperK9Auto extends SuperK9Base {
                 this.setPlowPower(-1.0);
                 if(this.autoWaitSeconds(1.5)) {
                     this.setPlowPower(0.0);
+                    //_state = States.DRIVE_TO_LINE;
                     _state = States.DRIVE_TO_BEACON_ZONE;
                 }
                 break;
+            /*
+            case DRIVE_TO_LINE:
+                if(this.autoDriveToLine(RUN_POWER)) {
+                    _state = States.WAIT_FOR_ALIGN;
+                }
+                break;
+            case WAIT_FOR_ALIGN:
+                if(this.autoWaitSeconds(1.0)) {
+                    _state = States.ALIGN_TO_LINE;
+                }
+                break;
+            case ALIGN_TO_LINE:
+                if(this.autoAlignToLine(TURN_POWER)) {
+                    _state = States.WAIT_TO_APPROACH;
+                }
+                break;
+            */
             case DRIVE_TO_BEACON_ZONE:
                 if(this.autoDriveDistance(_autoParams.DistanceToBeaconZone, RUN_POWER)) {
                     _state = States.WAIT_FOR_TURN;

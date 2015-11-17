@@ -126,6 +126,8 @@ public abstract class SuperK9Base extends OpMode {
 	LightSensor _sensorLego;
     final ElapsedTime _time = new ElapsedTime();
 
+    final static double LIGHT_THRESHOLD = 0.22;
+
     boolean _hasRearEncoders = false;
     int _leftEncoderOffset  = 0;
     int _rightEncoderOffset = 0;
@@ -477,7 +479,9 @@ public abstract class SuperK9Base extends OpMode {
         NONE,
         DRIVE,
         TURN,
-        WAIT
+        WAIT,
+        MOVE_TO_LINE, // Note: Decide on a better name
+        ALIGN
     }
     private AutoCommandState _commandState = AutoCommandState.NONE;
 
@@ -563,6 +567,48 @@ public abstract class SuperK9Base extends OpMode {
                 break;
             default:
                 throw new IllegalStateException("wait called without ending previous command: " + _commandState);
+        }
+        return false;
+    }
+
+    protected boolean autoDriveToLine(double speed) {
+        if(speed < 0) throw new IllegalArgumentException("speed: " + speed);
+        switch(_commandState) {
+            case NONE:
+                this.setPower(0, 0);
+                _commandState = AutoCommandState.MOVE_TO_LINE;
+                break;
+            case MOVE_TO_LINE:
+                this.setPower(speed, speed);
+                if(this.getLegoLight() < LIGHT_THRESHOLD) {
+                    this.setPower(0, 0);
+                    _commandState = AutoCommandState.NONE;
+                    return true;
+                }
+                break;
+            default:
+                throw new IllegalStateException("move to line called without ending previous command: " + _commandState);
+        }
+        return false;
+    }
+
+    protected boolean autoAlignToLine(double speed) {
+        if(speed < 0) throw new IllegalArgumentException("speed: " + speed);
+        switch(_commandState) {
+            case NONE:
+                this.setPower(0, 0);
+                _commandState = AutoCommandState.ALIGN;
+                break;
+            case ALIGN:
+                this.setPower(-speed, speed);
+                if(this.getLegoLight() < LIGHT_THRESHOLD) {
+                    this.setPower(0, 0);
+                    _commandState = AutoCommandState.NONE;
+                    return true;
+                }
+                break;
+            default:
+                throw new IllegalStateException("align called without ending previous command: " + _commandState);
         }
         return false;
     }

@@ -42,7 +42,6 @@ public class SuperK9Auto2 extends SuperK9Base {
 
     private static final double RUN_POWER  = 0.25;
     private static final double TURN_POWER = 0.50;
-    private static final double LIGHT_THRESHOLD = 0.22;
 
     private final FtcColor _robotColor;
     private boolean _running;
