@@ -122,8 +122,8 @@ public abstract class SuperK9Base extends OpMode {
 
 	DeviceInterfaceModule _cdim;
 	ColorSensor _sensorRGB;
-	OpticalDistanceSensor _sensorODS;
-	LightSensor _sensorLego;
+	LightSensor _lightInner;
+    LightSensor _lightOuter;
     final ElapsedTime _time = new ElapsedTime();
 
     final static double LIGHT_THRESHOLD = 0.22;
@@ -158,8 +158,8 @@ public abstract class SuperK9Base extends OpMode {
 		_cdim.setDigitalChannelMode(COLOR_LED_CHANNEL, DigitalChannelController.Mode.OUTPUT);
 		this.setColorSensorLED(false);
 
-		_sensorODS = hardwareMap.opticalDistanceSensor.get("ods");
-		_sensorLego = hardwareMap.lightSensor.get("light");
+		_lightOuter = hardwareMap.lightSensor.get("lightOuter");
+        _lightInner  = hardwareMap.lightSensor.get("lightInner");
 
         _buttonServo = hardwareMap.servo.get("buttonServo");
         _buttonServo.setDirection(Servo.Direction.REVERSE);
@@ -427,12 +427,12 @@ public abstract class SuperK9Base extends OpMode {
         _cdim.setDigitalChannelState(COLOR_LED_CHANNEL, enabled);
     }
 
-    protected double getODSLight() {
-        return _sensorODS.getLightDetected();
+    protected double getLightInner() {
+        return _lightInner.getLightDetected();
     }
 
-    protected double getLegoLight() {
-        return _sensorLego.getLightDetected();
+    protected double getLightOuter() {
+        return _lightOuter.getLightDetected();
     }
 
     protected int sign(double value) {
@@ -580,7 +580,7 @@ public abstract class SuperK9Base extends OpMode {
                 break;
             case MOVE_TO_LINE:
                 this.setPower(speed, speed);
-                if(this.getLegoLight() < LIGHT_THRESHOLD) {
+                if(this.getLightOuter() < LIGHT_THRESHOLD) {
                     this.setPower(0, 0);
                     _commandState = AutoCommandState.NONE;
                     return true;
@@ -601,7 +601,7 @@ public abstract class SuperK9Base extends OpMode {
                 break;
             case ALIGN:
                 this.setPower(-speed, speed);
-                if(this.getLegoLight() < LIGHT_THRESHOLD) {
+                if(this.getLightOuter() < LIGHT_THRESHOLD) {
                     this.setPower(0, 0);
                     _commandState = AutoCommandState.NONE;
                     return true;

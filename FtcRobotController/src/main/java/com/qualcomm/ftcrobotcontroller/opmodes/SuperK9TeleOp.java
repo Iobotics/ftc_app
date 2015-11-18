@@ -111,6 +111,7 @@ public class SuperK9TeleOp extends SuperK9Base {
 			this.setManServoPosition(ManServoPosition.PARK);
 		}
 
-		telemetry.addData("Light", this.getLegoLight());
+		telemetry.addData("lightOuter", this.getLightOuter());
+		telemetry.addData("lightInner", this.getLightInner());
 	}
 }
