@@ -31,18 +31,6 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE. */
 
 package com.qualcomm.ftcrobotcontroller.opmodes;
 
-import android.graphics.Color;
-
-import com.qualcomm.robotcore.eventloop.opmode.OpMode;
-import com.qualcomm.robotcore.hardware.ColorSensor;
-import com.qualcomm.robotcore.hardware.DcMotor;
-import com.qualcomm.robotcore.hardware.DeviceInterfaceModule;
-import com.qualcomm.robotcore.hardware.DigitalChannelController;
-import com.qualcomm.robotcore.hardware.LightSensor;
-import com.qualcomm.robotcore.hardware.OpticalDistanceSensor;
-import com.qualcomm.robotcore.util.ElapsedTime;
-import com.qualcomm.robotcore.util.Range;
-
 //import com.qualcomm.robotcore.hardware.Servo;
 
 /**
@@ -50,24 +38,25 @@ import com.qualcomm.robotcore.util.Range;
  * <p>
  * Enables control of the robot via the gamepad
  */
-public class SuperK9Auto extends SuperK9Base {
+public class SuperK9Auto3 extends SuperK9Base {
 
-    private static final double RUN_POWER  = 0.25;
-    private static final double TURN_POWER = 0.50;
+    private static final double RUN_POWER   = 0.25;
+    //private static final double TURN_POWER  = 0.50;
+    private static final double ALIGN_POWER = 0.25;
 
     private static final int DISTANCE_TO_CENTER = 6;
 
     private enum States {
         START,
         LOWER_PLOW,
-        //DRIVE_TO_LINE,
-        //WAIT_FOR_CENTER,
-        //CENTER_ON_LINE,
-        //WAIT_FOR_ALIGN,
-        //ALIGN_TO_LINE,
-        DRIVE_TO_BEACON_ZONE,
-        WAIT_FOR_TURN,
-        TURN_TO_BEACON,
+        DRIVE_TO_LINE,
+        WAIT_FOR_CENTER,
+        CENTER_ON_LINE,
+        WAIT_FOR_ALIGN,
+        ALIGN_TO_LINE,
+        //DRIVE_TO_BEACON_ZONE,
+        //WAIT_FOR_TURN,
+        //TURN_TO_BEACON,
         WAIT_TO_APPROACH,
         DRIVE_TO_BEACON,
         WAIT_FOR_MAN,
@@ -107,30 +96,30 @@ public class SuperK9Auto extends SuperK9Base {
         // Robot 8740 Blue //
         Auto8740Blue.DistanceToBeaconZone  = 92.5;
         Auto8740Blue.TurnToBeaconZone      = 20;
-        Auto8740Blue.DistanceToBeacon      = 7;
+        Auto8740Blue.DistanceToBeacon      = 5;
         Auto8740Blue.DistanceToLeaveBeacon = 0;
 
         // Robot 8740 Red //
         Auto8740Red.DistanceToBeaconZone  = 89.5;
         Auto8740Red.TurnToBeaconZone      = 25;
-        Auto8740Red.DistanceToBeacon      = 7;
+        Auto8740Red.DistanceToBeacon      = 5;
         Auto8740Red.DistanceToLeaveBeacon = 0;
 
         // Robot 8741 Blue //
         Auto8741Blue.DistanceToBeaconZone  = 90;
         Auto8741Blue.TurnToBeaconZone      = 20;
-        Auto8741Blue.DistanceToBeacon      = 7;
+        Auto8741Blue.DistanceToBeacon      = 5;
         Auto8741Blue.DistanceToLeaveBeacon = 0;
 
         // Robot 8741 Red //
         Auto8741Red.DistanceToBeaconZone  = 89;
         Auto8741Red.TurnToBeaconZone      = 23;
-        Auto8741Red.DistanceToBeacon      = 7;
+        Auto8741Red.DistanceToBeacon      = 5;
         Auto8741Red.DistanceToLeaveBeacon = 0;
 
     }
 
-    public SuperK9Auto(FtcColor robotColor) {
+    public SuperK9Auto3(FtcColor robotColor) {
         _robotColor = robotColor;
     }
 
@@ -165,11 +154,10 @@ public class SuperK9Auto extends SuperK9Base {
                 this.setPlowPower(-1.0);
                 if(this.autoWaitSeconds(1.5)) {
                     this.setPlowPower(0.0);
-                    //_state = States.DRIVE_TO_LINE;
-                    _state = States.DRIVE_TO_BEACON_ZONE;
+                    _state = States.DRIVE_TO_LINE;
+                    //_state = States.DRIVE_TO_BEACON_ZONE;
                 }
                 break;
-            /*
             case DRIVE_TO_LINE:
                 if(this.autoDriveToLine(RUN_POWER)) {
                     _state = States.WAIT_FOR_CENTER;
@@ -191,11 +179,11 @@ public class SuperK9Auto extends SuperK9Base {
                 }
                 break;
             case ALIGN_TO_LINE:
-                if(this.autoAlignToLine(TURN_POWER)) {
+                if(this.autoAlignToLine(ALIGN_POWER)) {
                     _state = States.WAIT_TO_APPROACH;
                 }
                 break;
-            */
+            /*
             case DRIVE_TO_BEACON_ZONE:
                 if(this.autoDriveDistance(_autoParams.DistanceToBeaconZone, RUN_POWER)) {
                     _state = States.WAIT_FOR_TURN;
@@ -215,6 +203,7 @@ public class SuperK9Auto extends SuperK9Base {
                     _state = States.WAIT_TO_APPROACH;
                 }
                 break;
+            */
             case WAIT_TO_APPROACH:
                 if(this.autoWaitSeconds(1.0)) {
                     _state = States.DRIVE_TO_BEACON;

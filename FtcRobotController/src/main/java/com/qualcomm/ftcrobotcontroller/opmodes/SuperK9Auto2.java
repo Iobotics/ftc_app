@@ -65,7 +65,7 @@ public class SuperK9Auto2 extends SuperK9Base {
     @Override
     protected void k9Loop() {
         telemetry.addData("Light", this.getLightOuter());
-        if(_running && this.getLightOuter() < LIGHT_THRESHOLD) {
+        if(_running && this.getLightOuter() < OUTER_LIGHT_THRESHOLD) {
             this.setPower(0, 0);
             _running = false;
         }

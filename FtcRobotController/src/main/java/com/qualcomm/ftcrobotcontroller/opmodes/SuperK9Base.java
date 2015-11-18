@@ -126,7 +126,8 @@ public abstract class SuperK9Base extends OpMode {
     LightSensor _lightOuter;
     final ElapsedTime _time = new ElapsedTime();
 
-    final static double LIGHT_THRESHOLD = 0.22;
+    final static double INNER_LIGHT_THRESHOLD = 0.2;  // Uncalibrated value //
+    final static double OUTER_LIGHT_THRESHOLD = 0.25; // Uncalibrated value //
 
     boolean _hasRearEncoders = false;
     int _leftEncoderOffset  = 0;
@@ -573,14 +574,16 @@ public abstract class SuperK9Base extends OpMode {
 
     protected boolean autoDriveToLine(double speed) {
         if(speed < 0) throw new IllegalArgumentException("speed: " + speed);
+        speed = Range.clip(speed, 0, 1.0);
         switch(_commandState) {
             case NONE:
                 this.setPower(0, 0);
                 _commandState = AutoCommandState.MOVE_TO_LINE;
                 break;
             case MOVE_TO_LINE:
-                this.setPower(speed, speed);
-                if(this.getLightOuter() < LIGHT_THRESHOLD) {
+                this.setPower(-speed, -speed);
+                //this.setPower(speed, speed);
+                if(this.getLightInner() < INNER_LIGHT_THRESHOLD) {
                     this.setPower(0, 0);
                     _commandState = AutoCommandState.NONE;
                     return true;
@@ -601,7 +604,8 @@ public abstract class SuperK9Base extends OpMode {
                 break;
             case ALIGN:
                 this.setPower(-speed, speed);
-                if(this.getLightOuter() < LIGHT_THRESHOLD) {
+                //this.setPower(speed, -speed);
+                if(this.getLightOuter() < OUTER_LIGHT_THRESHOLD) {
                     this.setPower(0, 0);
                     _commandState = AutoCommandState.NONE;
                     return true;
