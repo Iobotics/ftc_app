@@ -280,4 +280,9 @@ public class SuperK9Auto extends SuperK9Base {
                 break;
         }
     }
+
+    @Override
+    protected void k9Stop() {
+        this.autoEnd();
+    }
 }

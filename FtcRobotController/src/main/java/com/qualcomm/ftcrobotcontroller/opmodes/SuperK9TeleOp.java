@@ -63,6 +63,9 @@ public class SuperK9TeleOp extends SuperK9Base {
 		this.setManServoPosition(ManServoPosition.HOME);
 		//this.runWithoutEncoders();
         this.runWithEncoders();
+		//this.setInnerLightLEDEnabled(true);
+		//this.setOuterLightLEDEnabled(true);
+		this.resetLightSensors();
 	}
 
 	/*
@@ -98,7 +101,7 @@ public class SuperK9TeleOp extends SuperK9Base {
 
         this.setColorSensorLED(gamepad1.b);
 
-		this.setPlowPower(gamepad1.left_bumper?1:gamepad1.left_trigger>0.5?-1:0);
+		this.setPlowPower(gamepad1.left_bumper? 1 : gamepad1.left_trigger>0.5?-1:0);
 
 		this.setDozerPower(gamepad1.right_bumper ? 1 : gamepad1.right_trigger > 0.5 ? -1 : 0);
         //telemetry.addData("trigger", gamepad1.right_trigger);
@@ -110,6 +113,15 @@ public class SuperK9TeleOp extends SuperK9Base {
 		} else if(gamepad1.a) {
 			this.setManServoPosition(ManServoPosition.PARK);
 		}
+
+		if(gamepad1.x) {
+			this.setWinchPower(1.0);
+		} else {
+            this.setWinchPower(0.0);
+        }
+        if(gamepad1.right_stick_button && gamepad1.left_stick_button) {
+            this.startLaunchMotor();
+        }
 
 		telemetry.addData("lightOuter", this.getLightOuter());
 		telemetry.addData("lightInner", this.getLightInner());

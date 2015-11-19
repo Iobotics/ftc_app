@@ -42,9 +42,10 @@ public class SuperK9Auto3 extends SuperK9Base {
 
     private static final double RUN_POWER   = 0.25;
     //private static final double TURN_POWER  = 0.50;
-    private static final double ALIGN_POWER = 0.25;
+    private static final double ALIGN_POWER = 0.10;
 
-    private static final int DISTANCE_TO_CENTER = 6;
+    private static final int INCHES_TO_CENTER = 4;
+    private static final int INCHES_TO_BEACON = 5;
 
     private enum States {
         START,
@@ -77,47 +78,6 @@ public class SuperK9Auto3 extends SuperK9Base {
     private States _state;
     private final FtcColor _robotColor;
     private FtcColor _sensorColor;
-    private AutoParameters _autoParams;
-
-    public static class AutoParameters {
-        private AutoParameters() { }
-        public double DistanceToBeaconZone;
-        public double TurnToBeaconZone;
-        public double DistanceToBeacon;
-        public double DistanceToLeaveBeacon;
-    }
-
-    public static final AutoParameters Auto8740Blue = new AutoParameters();
-    public static final AutoParameters Auto8740Red  = new AutoParameters();
-    public static final AutoParameters Auto8741Blue = new AutoParameters();
-    public static final AutoParameters Auto8741Red  = new AutoParameters();
-
-    static {
-        // Robot 8740 Blue //
-        Auto8740Blue.DistanceToBeaconZone  = 92.5;
-        Auto8740Blue.TurnToBeaconZone      = 20;
-        Auto8740Blue.DistanceToBeacon      = 5;
-        Auto8740Blue.DistanceToLeaveBeacon = 0;
-
-        // Robot 8740 Red //
-        Auto8740Red.DistanceToBeaconZone  = 89.5;
-        Auto8740Red.TurnToBeaconZone      = 25;
-        Auto8740Red.DistanceToBeacon      = 5;
-        Auto8740Red.DistanceToLeaveBeacon = 0;
-
-        // Robot 8741 Blue //
-        Auto8741Blue.DistanceToBeaconZone  = 90;
-        Auto8741Blue.TurnToBeaconZone      = 20;
-        Auto8741Blue.DistanceToBeacon      = 5;
-        Auto8741Blue.DistanceToLeaveBeacon = 0;
-
-        // Robot 8741 Red //
-        Auto8741Red.DistanceToBeaconZone  = 89;
-        Auto8741Red.TurnToBeaconZone      = 23;
-        Auto8741Red.DistanceToBeacon      = 5;
-        Auto8741Red.DistanceToLeaveBeacon = 0;
-
-    }
 
     public SuperK9Auto3(FtcColor robotColor) {
         _robotColor = robotColor;
@@ -126,28 +86,30 @@ public class SuperK9Auto3 extends SuperK9Base {
     @Override
     protected void k9Init() {
         this.setManServoPosition(ManServoPosition.HOME);
-
-        // set parameters by team //
-        switch(this.getTeamNumber()) {
-            case TEAM_8740:
-                _autoParams = _robotColor == FtcColor.BLUE? Auto8740Blue: Auto8740Red;
-                break;
-            case TEAM_8741:
-                _autoParams = _robotColor == FtcColor.BLUE? Auto8741Blue: Auto8741Red;
-                break;
-        }
     }
 
     @Override
     protected void k9Start() {
+        //this.setOuterLightLEDEnabled(true);
         _state = States.START;
+
+        _lightMin = 0;
+        _lightMax = 0;
     }
+
+    double _lightMin;
+    double _lightMax;
 
     @Override
     protected void k9Loop() {
         telemetry.addData("State", _state.name());
+        double light = this.getLightOuter();
+        _lightMin = Math.min(light, _lightMin);
+        _lightMax = Math.max(light, _lightMax);
+        telemetry.addData("lightOuter", String.format("%f (%f)(%f)", light, _lightMin, _lightMax));
         switch(_state) {
             case START:
+                this.resetLightSensors();
                 _state = States.LOWER_PLOW;
                 break;
             case LOWER_PLOW:
@@ -169,7 +131,7 @@ public class SuperK9Auto3 extends SuperK9Base {
                 }
                 break;
             case CENTER_ON_LINE:
-                if(this.autoDriveDistance(DISTANCE_TO_CENTER, RUN_POWER)) {
+                if(this.autoDriveDistance(-INCHES_TO_CENTER, RUN_POWER)) {
                     _state = States.WAIT_FOR_ALIGN;
                 }
                 break;
@@ -210,7 +172,7 @@ public class SuperK9Auto3 extends SuperK9Base {
                 }
                 break;
             case DRIVE_TO_BEACON:
-                if(this.autoDriveDistance(_autoParams.DistanceToBeacon, RUN_POWER)) {
+                if(this.autoDriveDistance(-INCHES_TO_BEACON, RUN_POWER)) {
                     _state = States.WAIT_FOR_MAN;
                 }
                 break;
@@ -230,7 +192,7 @@ public class SuperK9Auto3 extends SuperK9Base {
                 if(_doBeacon) {
                     _state = States.READ_COLOR_SENSOR;
                 } else {
-                    _state = States.LEAVE_BEACON;
+                    _state = States.STOP; //States.LEAVE_BEACON;
                 }
                 break;
             case READ_COLOR_SENSOR:
@@ -238,7 +200,7 @@ public class SuperK9Auto3 extends SuperK9Base {
                 _state       = States.REVERSE_FOR_PUSH;
                 break;
             case REVERSE_FOR_PUSH:
-                if(this.autoDriveDistance(_autoParams.DistanceToBeacon, RUN_POWER)) {
+                if(this.autoDriveDistance(-INCHES_TO_BEACON, RUN_POWER)) {
                     _state = States.SET_BUTTON_PUSHER;
                 }
                 break;
@@ -251,17 +213,18 @@ public class SuperK9Auto3 extends SuperK9Base {
                 }
                 break;
             case PUSH_BUTTON:
-                if(this.autoDriveDistance(_autoParams.DistanceToBeacon, RUN_POWER)) {
+                if(this.autoDriveDistance(-INCHES_TO_BEACON, RUN_POWER)) {
                     _state = States.WAIT_FOR_BEACON;
                 }
             case WAIT_FOR_BEACON:
                 if(this.autoWaitSeconds(1.0)) {
                     this.setButtonServoPosition(ButtonServoPosition.CENTER);
-                    _state = States.LEAVE_BEACON;
+                    //_state = States.LEAVE_BEACON;
+                    _state = States.STOP;
                 }
                 break;
             case LEAVE_BEACON:
-                if(this.autoDriveDistance(-_autoParams.DistanceToLeaveBeacon, RUN_POWER)) {
+                if(this.autoDriveDistance(INCHES_TO_BEACON, RUN_POWER)) {
                     _state = States.STOP;
                 }
                 break;
@@ -269,4 +232,10 @@ public class SuperK9Auto3 extends SuperK9Base {
                 break;
         }
     }
+
+    @Override
+    protected void k9Stop() {
+        this.autoEnd();
+    }
+
 }

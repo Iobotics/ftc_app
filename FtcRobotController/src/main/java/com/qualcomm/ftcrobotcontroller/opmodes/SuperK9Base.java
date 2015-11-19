@@ -94,6 +94,9 @@ public abstract class SuperK9Base extends OpMode {
     final static double HUE_THRESHOLD_RED  = 25.0;
     final static double HUE_THRESHOLD_BLUE = 200.0;
 
+    final static double LAUNCH_MOTOR_POWER = 0.5;
+    final static double LAUNCH_LOOP_COUNT = 5;
+
     protected enum FtcColor {
         RED,
         BLUE,
@@ -105,6 +108,8 @@ public abstract class SuperK9Base extends OpMode {
 	DcMotor _motorRightRear;
 	DcMotor _motorLeftFront;
 	DcMotor _motorLeftRear;
+    DcMotor _winchMotor;
+    DcMotor _launchMotor;
 
     Servo _buttonServo;
     Servo _manServo;
@@ -126,12 +131,16 @@ public abstract class SuperK9Base extends OpMode {
     LightSensor _lightOuter;
     final ElapsedTime _time = new ElapsedTime();
 
-    final static double INNER_LIGHT_THRESHOLD = 0.2;  // Uncalibrated value //
-    final static double OUTER_LIGHT_THRESHOLD = 0.25; // Uncalibrated value //
+    final static double INNER_LIGHT_THRESHOLD = -0.3;  // Uncalibrated value //
+    final static double OUTER_LIGHT_THRESHOLD = -0.3; // Uncalibrated value //
 
     boolean _hasRearEncoders = false;
     int _leftEncoderOffset  = 0;
     int _rightEncoderOffset = 0;
+    double _lightInnerOffset = 0.0;
+    double _lightOuterOffset = 0.0;
+    int _launchLoopCount = 0;
+    boolean _launcherRunning = false;
 
     protected enum TeamNumber {
         TEAM_8740,
@@ -153,6 +162,10 @@ public abstract class SuperK9Base extends OpMode {
 
 		_motorRightFront.setDirection(DcMotor.Direction.REVERSE);
 		_motorRightRear.setDirection(DcMotor.Direction.REVERSE);
+
+        _winchMotor = hardwareMap.dcMotor.get("winchMotor");
+        _winchMotor.setPowerFloat();
+        _launchMotor = hardwareMap.dcMotor.get("launchMotor");
 
 		_cdim = hardwareMap.deviceInterfaceModule.get("dim");
 		_sensorRGB = hardwareMap.colorSensor.get("color");
@@ -200,6 +213,7 @@ public abstract class SuperK9Base extends OpMode {
     @Override
     public void start() {
         _time.reset();
+        _launchLoopCount = 0;
         this.k9Start();
     }
 
@@ -211,6 +225,7 @@ public abstract class SuperK9Base extends OpMode {
     @Override
     public void loop() {
         telemetry.addData("Text", "*** Robot Data***");
+        this.launchMotorLoop();
         this.k9Loop();
 
 		/*
@@ -408,6 +423,34 @@ public abstract class SuperK9Base extends OpMode {
         _dozerMotor.setPosition(power);
     }
 
+    protected double getWinchPower() {
+        return _winchMotor.getPower();
+    }
+
+    protected void setWinchPower(double power) {
+        power = Range.clip(power, 0, 1.0);
+        _winchMotor.setPower(power);
+    }
+
+    protected void startLaunchMotor() {
+        // only allow once //
+        if(_launchLoopCount > 0) return;
+        _launchMotor.setPower(LAUNCH_MOTOR_POWER);
+        _launchLoopCount++;
+        _launcherRunning = true;
+    }
+
+    private void launchMotorLoop() {
+        if(!_launcherRunning) return;
+        // reset after a fixed number of loops //
+        if(_launchLoopCount >= LAUNCH_LOOP_COUNT) {
+            _launchMotor.setPower(0.0);
+            _launcherRunning = false;
+            return;
+        }
+        _launchLoopCount++;
+    }
+
     protected float getColorSensorHue() {
         float hsvValues[] = {0F,0F,0F};
 
@@ -428,12 +471,33 @@ public abstract class SuperK9Base extends OpMode {
         _cdim.setDigitalChannelState(COLOR_LED_CHANNEL, enabled);
     }
 
+    protected boolean isInnerLineDetected() {
+        return this.getLightInner() < INNER_LIGHT_THRESHOLD;
+    }
+
     protected double getLightInner() {
-        return _lightInner.getLightDetected();
+        return _lightInner.getLightDetected() - _lightInnerOffset;
+    }
+
+    protected void setInnerLightLEDEnabled(boolean enabled) {
+        _lightInner.enableLed(enabled);
+    }
+
+    protected boolean isOuterLineDetected() {
+        return this.getLightOuter() < OUTER_LIGHT_THRESHOLD;
     }
 
     protected double getLightOuter() {
-        return _lightOuter.getLightDetected();
+        return _lightOuter.getLightDetected() - _lightOuterOffset;
+    }
+
+    protected void setOuterLightLEDEnabled(boolean enabled) {
+        _lightOuter.enableLed(enabled);
+    }
+
+    protected void resetLightSensors() {
+        _lightInnerOffset = _lightInner.getLightDetected();
+        _lightOuterOffset = _lightOuter.getLightDetected();
     }
 
     protected int sign(double value) {
@@ -578,13 +642,16 @@ public abstract class SuperK9Base extends OpMode {
         switch(_commandState) {
             case NONE:
                 this.setPower(0, 0);
+                //this.setInnerLightLEDEnabled(true);
                 _commandState = AutoCommandState.MOVE_TO_LINE;
                 break;
             case MOVE_TO_LINE:
+                this.runWithEncoders();
                 this.setPower(-speed, -speed);
                 //this.setPower(speed, speed);
-                if(this.getLightInner() < INNER_LIGHT_THRESHOLD) {
+                if(this.isInnerLineDetected()) {
                     this.setPower(0, 0);
+                    //this.setInnerLightLEDEnabled(false);
                     _commandState = AutoCommandState.NONE;
                     return true;
                 }
@@ -600,13 +667,16 @@ public abstract class SuperK9Base extends OpMode {
         switch(_commandState) {
             case NONE:
                 this.setPower(0, 0);
+                //this.setOuterLightLEDEnabled(true);
                 _commandState = AutoCommandState.ALIGN;
                 break;
             case ALIGN:
+                this.runWithEncoders();
                 this.setPower(-speed, speed);
                 //this.setPower(speed, -speed);
-                if(this.getLightOuter() < OUTER_LIGHT_THRESHOLD) {
+                if(this.isOuterLineDetected()) {
                     this.setPower(0, 0);
+                    //this.setOuterLightLEDEnabled(false);
                     _commandState = AutoCommandState.NONE;
                     return true;
                 }
