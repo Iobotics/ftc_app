@@ -50,6 +50,7 @@ public class SuperK9Auto3 extends SuperK9Base {
     private enum States {
         START,
         LOWER_PLOW,
+        RESET_LIGHT_SENSORS,
         DRIVE_TO_LINE,
         WAIT_FOR_CENTER,
         CENTER_ON_LINE,
@@ -90,23 +91,14 @@ public class SuperK9Auto3 extends SuperK9Base {
 
     @Override
     protected void k9Start() {
-        //this.setOuterLightLEDEnabled(true);
+        this.setInnerLightLEDColor(_robotColor);
+        this.setOuterLightLEDColor(_robotColor);
         _state = States.START;
-
-        _lightMin = 0;
-        _lightMax = 0;
     }
-
-    double _lightMin;
-    double _lightMax;
 
     @Override
     protected void k9Loop() {
         telemetry.addData("State", _state.name());
-        double light = this.getLightOuter();
-        _lightMin = Math.min(light, _lightMin);
-        _lightMax = Math.max(light, _lightMax);
-        telemetry.addData("lightOuter", String.format("%f (%f)(%f)", light, _lightMin, _lightMax));
         switch(_state) {
             case START:
                 this.resetLightSensors();
@@ -116,6 +108,12 @@ public class SuperK9Auto3 extends SuperK9Base {
                 this.setPlowPower(-1.0);
                 if(this.autoWaitSeconds(1.5)) {
                     this.setPlowPower(0.0);
+                    _state = States.RESET_LIGHT_SENSORS;
+                }
+                break;
+            case RESET_LIGHT_SENSORS:
+                if(this.autoWaitSeconds(1.0)) {
+                    this.resetLightSensors();
                     _state = States.DRIVE_TO_LINE;
                     //_state = States.DRIVE_TO_BEACON_ZONE;
                 }
@@ -141,7 +139,8 @@ public class SuperK9Auto3 extends SuperK9Base {
                 }
                 break;
             case ALIGN_TO_LINE:
-                if(this.autoAlignToLine(ALIGN_POWER)) {
+                // align in direction based on color //
+                if(this.autoAlignToLine(_robotColor == FtcColor.RED? ALIGN_POWER: -ALIGN_POWER)) {
                     _state = States.WAIT_TO_APPROACH;
                 }
                 break;
@@ -236,6 +235,8 @@ public class SuperK9Auto3 extends SuperK9Base {
     @Override
     protected void k9Stop() {
         this.autoEnd();
+        this.setInnerLightLEDColor(FtcColor.NONE);
+        this.setOuterLightLEDColor(FtcColor.NONE);
     }
 
 }

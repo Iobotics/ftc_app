@@ -40,6 +40,7 @@ import com.qualcomm.robotcore.hardware.DcMotorController;
 import com.qualcomm.robotcore.hardware.DeviceInterfaceModule;
 import com.qualcomm.robotcore.hardware.DigitalChannel;
 import com.qualcomm.robotcore.hardware.DigitalChannelController;
+import com.qualcomm.robotcore.hardware.LED;
 import com.qualcomm.robotcore.hardware.LightSensor;
 import com.qualcomm.robotcore.hardware.OpticalDistanceSensor;
 import com.qualcomm.robotcore.hardware.Servo;
@@ -88,19 +89,17 @@ public abstract class SuperK9Base extends OpMode {
     final static double DOZER_POWER_MIN = -0.35;
     final static double DOZER_POWER_MAX = 0.5;
 
-    // color sensor information //
-    final static int COLOR_LED_CHANNEL = 5;
-
-    final static double HUE_THRESHOLD_RED  = 25.0;
-    final static double HUE_THRESHOLD_BLUE = 200.0;
-
     final static double LAUNCH_MOTOR_POWER = 0.5;
     final static double LAUNCH_LOOP_COUNT = 5;
+
+    // color sensor information //
+    final static double HUE_THRESHOLD_RED  = 25.0;
+    final static double HUE_THRESHOLD_BLUE = 200.0;
 
     protected enum FtcColor {
         RED,
         BLUE,
-        UNKNOWN
+        NONE
     }
 
     // hardware instances //
@@ -127,8 +126,11 @@ public abstract class SuperK9Base extends OpMode {
 
 	DeviceInterfaceModule _cdim;
 	ColorSensor _sensorRGB;
+    DigitalChannel _ledColorSensor;
 	LightSensor _lightInner;
+    DigitalChannel _ledInnerRed, _ledInnerBlue;
     LightSensor _lightOuter;
+    DigitalChannel _ledOuterRed, _ledOuterBlue;
     final ElapsedTime _time = new ElapsedTime();
 
     final static double INNER_LIGHT_THRESHOLD = -0.3;  // Uncalibrated value //
@@ -169,11 +171,22 @@ public abstract class SuperK9Base extends OpMode {
 
 		_cdim = hardwareMap.deviceInterfaceModule.get("dim");
 		_sensorRGB = hardwareMap.colorSensor.get("color");
-		_cdim.setDigitalChannelMode(COLOR_LED_CHANNEL, DigitalChannelController.Mode.OUTPUT);
+        _ledColorSensor = hardwareMap.digitalChannel.get("colorLed");
+        _ledColorSensor.setMode(DigitalChannelController.Mode.OUTPUT);
 		this.setColorSensorLED(false);
 
 		_lightOuter = hardwareMap.lightSensor.get("lightOuter");
+        _ledOuterRed = hardwareMap.digitalChannel.get("ledOuterRed");
+        _ledOuterRed.setMode(DigitalChannelController.Mode.OUTPUT);
+        _ledOuterBlue = hardwareMap.digitalChannel.get("ledOuterBlue");
+        _ledOuterBlue.setMode(DigitalChannelController.Mode.OUTPUT);
+        this.setOuterLightLEDColor(FtcColor.NONE);
         _lightInner  = hardwareMap.lightSensor.get("lightInner");
+        _ledInnerRed = hardwareMap.digitalChannel.get("ledInnerRed");
+        _ledInnerRed.setMode(DigitalChannelController.Mode.OUTPUT);
+        _ledInnerBlue = hardwareMap.digitalChannel.get("ledInnerBlue");
+        _ledInnerBlue.setMode(DigitalChannelController.Mode.OUTPUT);
+        this.setInnerLightLEDColor(FtcColor.NONE);
 
         _buttonServo = hardwareMap.servo.get("buttonServo");
         _buttonServo.setDirection(Servo.Direction.REVERSE);
@@ -183,6 +196,7 @@ public abstract class SuperK9Base extends OpMode {
         _rightTrigger.setDirection(Servo.Direction.REVERSE);
         this.setRightTriggerDeployed(false);
         _leftTrigger  = hardwareMap.servo.get("leftTrigger");
+        _leftTrigger.setDirection(Servo.Direction.REVERSE);
         this.setLeftTriggerDeployed(false);
 
         _manServo = hardwareMap.servo.get("manServo");
@@ -460,15 +474,15 @@ public abstract class SuperK9Base extends OpMode {
 
     protected FtcColor getColorSensor() {
         float hue = this.getColorSensorHue();
-        return hue <= HUE_THRESHOLD_RED? FtcColor.RED: hue >= HUE_THRESHOLD_BLUE? FtcColor.BLUE: FtcColor.UNKNOWN;
+        return hue <= HUE_THRESHOLD_RED? FtcColor.RED: hue >= HUE_THRESHOLD_BLUE? FtcColor.BLUE: FtcColor.NONE;
     }
 
     protected boolean getColorSensorLED() {
-        return _cdim.getDigitalChannelState(COLOR_LED_CHANNEL);
+        return _ledColorSensor.getState();
     }
 
     protected void setColorSensorLED(boolean enabled) {
-        _cdim.setDigitalChannelState(COLOR_LED_CHANNEL, enabled);
+        _ledColorSensor.setState(enabled);
     }
 
     protected boolean isInnerLineDetected() {
@@ -479,8 +493,10 @@ public abstract class SuperK9Base extends OpMode {
         return _lightInner.getLightDetected() - _lightInnerOffset;
     }
 
-    protected void setInnerLightLEDEnabled(boolean enabled) {
-        _lightInner.enableLed(enabled);
+    protected void setInnerLightLEDColor(FtcColor color) {
+        // active low //
+        _ledInnerRed.setState(color != FtcColor.RED);
+        _ledInnerBlue.setState(color != FtcColor.BLUE);
     }
 
     protected boolean isOuterLineDetected() {
@@ -491,8 +507,10 @@ public abstract class SuperK9Base extends OpMode {
         return _lightOuter.getLightDetected() - _lightOuterOffset;
     }
 
-    protected void setOuterLightLEDEnabled(boolean enabled) {
-        _lightOuter.enableLed(enabled);
+    protected void setOuterLightLEDColor(FtcColor color) {
+        // active low //
+        _ledInnerRed.setState(color != FtcColor.RED);
+        _ledInnerBlue.setState(color != FtcColor.BLUE);
     }
 
     protected void resetLightSensors() {

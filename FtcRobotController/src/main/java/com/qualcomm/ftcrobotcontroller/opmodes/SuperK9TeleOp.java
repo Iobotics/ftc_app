@@ -34,6 +34,7 @@ package com.qualcomm.ftcrobotcontroller.opmodes;
 import android.graphics.Color;
 
 import com.qualcomm.robotcore.eventloop.opmode.OpMode;
+import com.qualcomm.robotcore.hardware.AnalogInput;
 import com.qualcomm.robotcore.hardware.DigitalChannelController;
 import com.qualcomm.robotcore.hardware.ColorSensor;
 import com.qualcomm.robotcore.hardware.DcMotor;
@@ -53,6 +54,10 @@ import java.lang.Math;
  */
 public class SuperK9TeleOp extends SuperK9Base {
 
+
+	@Override
+	public void k9Init() { }
+
 	/*
 	 * Autonomous program
 	 *
@@ -63,8 +68,6 @@ public class SuperK9TeleOp extends SuperK9Base {
 		this.setManServoPosition(ManServoPosition.HOME);
 		//this.runWithoutEncoders();
         this.runWithEncoders();
-		//this.setInnerLightLEDEnabled(true);
-		//this.setOuterLightLEDEnabled(true);
 		this.resetLightSensors();
 	}
 
@@ -92,19 +95,17 @@ public class SuperK9TeleOp extends SuperK9Base {
 
 		if(gamepad1.dpad_left) {
 			this.setLeftTriggerDeployed(true);
+			this.setRightTriggerDeployed(false);
 		} else if(gamepad1.dpad_right) {
 			this.setRightTriggerDeployed(true);
-		} else {
+			this.setLeftTriggerDeployed(false);
+		} else if(gamepad1.dpad_up){
 			this.setLeftTriggerDeployed(false);
 			this.setRightTriggerDeployed(false);
 		}
 
-        this.setColorSensorLED(gamepad1.b);
-
-		this.setPlowPower(gamepad1.left_bumper? 1 : gamepad1.left_trigger>0.5?-1:0);
-
+		this.setPlowPower(gamepad1.left_bumper? 1 : gamepad1.left_trigger > 0.5 ? -1 : 0);
 		this.setDozerPower(gamepad1.right_bumper ? 1 : gamepad1.right_trigger > 0.5 ? -1 : 0);
-        //telemetry.addData("trigger", gamepad1.right_trigger);
 
 		if(gamepad1.y) {
 			this.setManServoPosition(ManServoPosition.DEPLOY);
@@ -125,5 +126,7 @@ public class SuperK9TeleOp extends SuperK9Base {
 
 		telemetry.addData("lightOuter", this.getLightOuter());
 		telemetry.addData("lightInner", this.getLightInner());
+		//telemetry.addData("ods", String.format("%f, %d", _ods.getLightDetected(), _ods.getLightDetectedRaw()));
+		//telemetry.addData("analog", _analog.getValue());
 	}
 }
