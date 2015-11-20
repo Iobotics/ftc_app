@@ -138,7 +138,6 @@ public abstract class SuperK9Base extends OpMode {
     DigitalChannel _ledOuterRed, _ledOuterBlue;
     final ElapsedTime _time = new ElapsedTime();
 
-    boolean _hasRearEncoders = false;
     int _leftEncoderOffset  = 0;
     int _rightEncoderOffset = 0;
     double _lightInnerOffset = 0.0;
@@ -217,7 +216,6 @@ public abstract class SuperK9Base extends OpMode {
             // no jumper set //
             _teamNumber = TeamNumber.TEAM_8740;
         }
-        this.setHasRearEncoders(true);
         this.k9Init();
 	}
 
@@ -301,14 +299,6 @@ public abstract class SuperK9Base extends OpMode {
         _motorLeftRear.setPower(leftPower);
     }
 
-    protected boolean hasRearEncoders() {
-        return _hasRearEncoders;
-    }
-
-    protected void setHasRearEncoders(boolean has) {
-        _hasRearEncoders = has;
-    }
-
     protected int getLeftEncoder() {
         return _motorLeftFront.getCurrentPosition() - _leftEncoderOffset;
     }
@@ -350,10 +340,8 @@ public abstract class SuperK9Base extends OpMode {
         this.setEncoderMode(DcMotorController.RunMode.RUN_TO_POSITION);
         _motorLeftFront.setTargetPosition(leftTicks);
         _motorRightFront.setTargetPosition(rightTicks);
-        if(this.hasRearEncoders()) {
-            _motorLeftRear.setTargetPosition(leftTicks);
-            _motorRightRear.setTargetPosition(rightTicks);
-        }
+        _motorLeftRear.setTargetPosition(leftTicks);
+        _motorRightRear.setTargetPosition(rightTicks);
         this.setPower(this.sign(leftInches) * power, this.sign(rightInches) * power);
     }
 
@@ -527,11 +515,8 @@ public abstract class SuperK9Base extends OpMode {
     private void setEncoderMode(DcMotorController.RunMode mode) {
         _motorLeftFront.setMode(mode);
         _motorRightFront.setMode(mode);
-
-        if(this.hasRearEncoders()) {
-            _motorLeftRear.setMode(mode);
-            _motorRightRear.setMode(mode);
-        }
+        _motorLeftRear.setMode(mode);
+        _motorRightRear.setMode(mode);
     }
 
 	private double scaleInput(double dVal)  {
