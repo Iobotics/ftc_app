@@ -102,6 +102,17 @@ public abstract class SuperK9Base extends OpMode {
         NONE
     }
 
+    // trigger configuration //
+    final static double TRIGGER_LEFT_POS_IN  = 0.62;
+    final static double TRIGGER_LEFT_POS_OUT = 0.0;
+
+    final static double TRIGGER_RIGHT_POS_IN  = 0.4;
+    final static double TRIGGER_RIGHT_POS_OUT = 1.0;
+
+    // light sensor configuration //
+    final static double INNER_LIGHT_THRESHOLD = 0.3; // note: these should be positive //
+    final static double OUTER_LIGHT_THRESHOLD = 0.3;
+
     // hardware instances //
 	DcMotor _motorRightFront;
 	DcMotor _motorRightRear;
@@ -118,12 +129,6 @@ public abstract class SuperK9Base extends OpMode {
     Servo _leftTrigger;
     Servo _rightTrigger;
 
-    final static double TRIGGER_LEFT_POS_IN  = 0.62;
-    final static double TRIGGER_LEFT_POS_OUT = 0.0;
-
-    final static double TRIGGER_RIGHT_POS_IN  = 0.4;
-    final static double TRIGGER_RIGHT_POS_OUT = 1.0;
-
 	DeviceInterfaceModule _cdim;
 	ColorSensor _sensorRGB;
     DigitalChannel _ledColorSensor;
@@ -132,9 +137,6 @@ public abstract class SuperK9Base extends OpMode {
     LightSensor _lightOuter;
     DigitalChannel _ledOuterRed, _ledOuterBlue;
     final ElapsedTime _time = new ElapsedTime();
-
-    final static double INNER_LIGHT_THRESHOLD = -0.3;  // Uncalibrated value //
-    final static double OUTER_LIGHT_THRESHOLD = -0.3; // Uncalibrated value //
 
     boolean _hasRearEncoders = false;
     int _leftEncoderOffset  = 0;
@@ -486,7 +488,7 @@ public abstract class SuperK9Base extends OpMode {
     }
 
     protected boolean isInnerLineDetected() {
-        return this.getLightInner() < INNER_LIGHT_THRESHOLD;
+        return Math.abs(this.getLightInner()) > INNER_LIGHT_THRESHOLD;
     }
 
     protected double getLightInner() {
@@ -500,7 +502,7 @@ public abstract class SuperK9Base extends OpMode {
     }
 
     protected boolean isOuterLineDetected() {
-        return this.getLightOuter() < OUTER_LIGHT_THRESHOLD;
+        return Math.abs(this.getLightOuter()) > OUTER_LIGHT_THRESHOLD;
     }
 
     protected double getLightOuter() {
