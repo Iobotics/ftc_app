@@ -56,9 +56,6 @@ public class SuperK9Auto3 extends SuperK9Base {
         CENTER_ON_LINE,
         WAIT_FOR_ALIGN,
         ALIGN_TO_LINE,
-        //DRIVE_TO_BEACON_ZONE,
-        //WAIT_FOR_TURN,
-        //TURN_TO_BEACON,
         WAIT_TO_APPROACH,
         DRIVE_TO_BEACON,
         WAIT_FOR_MAN,
@@ -147,27 +144,6 @@ public class SuperK9Auto3 extends SuperK9Base {
                     _state = States.WAIT_TO_APPROACH;
                 }
                 break;
-            /*
-            case DRIVE_TO_BEACON_ZONE:
-                if(this.autoDriveDistance(_autoParams.DistanceToBeaconZone, RUN_POWER)) {
-                    _state = States.WAIT_FOR_TURN;
-                }
-                break;
-            case WAIT_FOR_TURN:
-                if(this.autoWaitSeconds(1.0)) {
-                    _state = States.TURN_TO_BEACON;
-                }
-                break;
-            case TURN_TO_BEACON:
-                // turn left or right based on the robot color //
-                double beaconPivot = _robotColor == FtcColor.BLUE?
-                         _autoParams.TurnToBeaconZone:
-                        -_autoParams.TurnToBeaconZone;
-                if(this.autoTurnPivot(beaconPivot, TURN_POWER)) {
-                    _state = States.WAIT_TO_APPROACH;
-                }
-                break;
-            */
             case WAIT_TO_APPROACH:
                 if(this.autoWaitSeconds(1.0)) {
                     _state = States.DRIVE_TO_BEACON;
