@@ -70,11 +70,13 @@ public abstract class SuperK9Base extends OpMode {
 
     final static double MAN_SERVO_POS_PARK   = 0.0;
     final static double MAN_SERVO_POS_HOME   = 0.18;
+    final static double MAN_SERVO_POS_HOVER  = 0.48;
     final static double MAN_SERVO_POS_DEPLOY = 0.78;
 
     protected enum ManServoPosition {
         PARK,
         HOME,
+        HOVER,
         DEPLOY
     }
 
@@ -390,6 +392,10 @@ public abstract class SuperK9Base extends OpMode {
                     _buttonServo.setPosition(MAN_SERVO_POS_DEPLOY);
                     _manServo.setPosition(MAN_SERVO_POS_DEPLOY);
                     break;
+                case HOVER:
+                    _buttonServo.setPosition(MAN_SERVO_POS_HOVER);
+                    _manServo.setPosition(MAN_SERVO_POS_HOVER);
+                    break;
                 case PARK:
                     _buttonServo.setPosition(MAN_SERVO_POS_PARK);
                     _manServo.setPosition(MAN_SERVO_POS_PARK);
@@ -402,6 +408,9 @@ public abstract class SuperK9Base extends OpMode {
                     break;
                 case DEPLOY:
                     _manServo.setPosition(MAN_SERVO_POS_DEPLOY);
+                    break;
+                case HOVER:
+                    _manServo.setPosition(MAN_SERVO_POS_HOVER);
                     break;
                 case PARK:
                     _manServo.setPosition(MAN_SERVO_POS_PARK);

@@ -64,6 +64,9 @@ public class SuperK9Auto3 extends SuperK9Base {
         WAIT_FOR_MAN,
         DEPLOY_MAN_DROPPER,
         RESET_MAN_DROPPER,
+        HOVER_MAN_DROPPER,
+        DEPLOY_MAN_DROPPER2,
+        RESET_MAN_DROPPER2,
         READ_COLOR_SENSOR,
         REVERSE_FOR_PUSH,
         SET_BUTTON_PUSHER,
@@ -140,7 +143,7 @@ public class SuperK9Auto3 extends SuperK9Base {
                 break;
             case ALIGN_TO_LINE:
                 // align in direction based on color //
-                if(this.autoAlignToLine(_robotColor == FtcColor.RED? ALIGN_POWER: -ALIGN_POWER)) {
+                if(this.autoAlignToLine(_robotColor == FtcColor.RED ? ALIGN_POWER : -ALIGN_POWER)) {
                     _state = States.WAIT_TO_APPROACH;
                 }
                 break;
@@ -187,6 +190,26 @@ public class SuperK9Auto3 extends SuperK9Base {
                 }
                 break;
             case RESET_MAN_DROPPER:
+                this.setManServoPosition(ManServoPosition.HOME);
+                if(_doBeacon) {
+                    _state = States.READ_COLOR_SENSOR;
+                } else {
+                    _state = States.HOVER_MAN_DROPPER; //States.LEAVE_BEACON;
+                }
+                break;
+            case HOVER_MAN_DROPPER:
+                this.setManServoPosition(ManServoPosition.HOVER);
+                if(this.autoWaitSeconds(1.0)) {
+                    _state = States.DEPLOY_MAN_DROPPER2;
+                }
+                break;
+            case DEPLOY_MAN_DROPPER2:
+                this.setManServoPosition(ManServoPosition.DEPLOY);
+                if(this.autoWaitSeconds(1.0)) {
+                    _state = States.RESET_MAN_DROPPER2;
+                }
+                break;
+            case RESET_MAN_DROPPER2:
                 this.setManServoPosition(ManServoPosition.HOME);
                 if(_doBeacon) {
                     _state = States.READ_COLOR_SENSOR;
