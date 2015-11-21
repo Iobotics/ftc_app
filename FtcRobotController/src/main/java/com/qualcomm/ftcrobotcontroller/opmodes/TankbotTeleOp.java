@@ -57,16 +57,13 @@ public class TankbotTeleOp extends TankbotBase {
     @Override
     public void TBLoop() {
 
-        /*float pos = (gamepad1.left_stick_y + 1) / 2;
-        _manServo.setPosition(pos);
-        telemetry.addData("ServoPos", pos);*/
-        double left  = -gamepad1.left_stick_y;
+        /*double left  = -gamepad1.left_stick_y;
         double right = -gamepad1.right_stick_y;
+        this.setPowerScaled(left, right);*/
 
-        this.setPowerScaled(left, right);
-
-        //_leftServo.setPosition(left);
-        //_rightServo.setPosition(right);
+        double power = gamepad1.right_stick_y;
+        double turn  = gamepad1.left_stick_x;
+        this.setArcade(power, turn, true);
 
         if(gamepad1.y) {
             this.setManServoPosition(ManServoPosition.DEPLOY);
@@ -76,16 +73,69 @@ public class TankbotTeleOp extends TankbotBase {
             this.setManServoPosition(ManServoPosition.PARK);
         }
 
-        if(gamepad1.right_trigger > 0.5) {
+        if(gamepad1.dpad_left) {
+            this.setLeftTriggerDeployed(true);
             this.setRightTriggerDeployed(false);
-        } else if(gamepad1.right_bumper) {
+        } else if(gamepad1.dpad_right) {
             this.setRightTriggerDeployed(true);
+            this.setLeftTriggerDeployed(false);
+        } else if(gamepad1.dpad_up){
+            this.setLeftTriggerDeployed(false);
+            this.setRightTriggerDeployed(false);
+        }
+
+        if(gamepad1.right_trigger > 0.5) {
+            this.setRightShieldPosition(1.0);
+        } else if(gamepad1.right_bumper) {
+            this.setRightShieldPosition(0.0);
         }
 
         if(gamepad1.left_trigger > 0.5) {
-            this.setLeftTriggerDeployed(false);
+            this.setLeftShieldPosition(1.0);
         } else if(gamepad1.left_bumper) {
-            this.setLeftTriggerDeployed(true);
+            this.setLeftShieldPosition(0.0);
         }
+    }
+
+    void setArcade(double moveValue, double rotateValue, boolean squaredInputs) {
+        // local variables to hold the computed PWM values for the motors
+        double leftMotorOutput;
+        double rightMotorOutput;
+
+        moveValue = Range.clip(moveValue, -1.0, 1.0);
+        rotateValue = Range.clip(rotateValue, -1.0, 1.0);
+
+        if (squaredInputs) {
+            // square the inputs (while preserving the sign) to increase fine control while permitting full power
+            if (moveValue >= 0.0) {
+                moveValue = (moveValue * moveValue);
+            } else {
+                moveValue = -(moveValue * moveValue);
+            }
+            if (rotateValue >= 0.0) {
+                rotateValue = (rotateValue * rotateValue);
+            } else {
+                rotateValue = -(rotateValue * rotateValue);
+            }
+        }
+
+        if (moveValue > 0.0) {
+            if (rotateValue > 0.0) {
+                leftMotorOutput = moveValue - rotateValue;
+                rightMotorOutput = Math.max(moveValue, rotateValue);
+            } else {
+                leftMotorOutput = Math.max(moveValue, -rotateValue);
+                rightMotorOutput = moveValue + rotateValue;
+            }
+        } else {
+            if (rotateValue > 0.0) {
+                leftMotorOutput = -Math.max(-moveValue, rotateValue);
+                rightMotorOutput = moveValue + rotateValue;
+            } else {
+                leftMotorOutput = moveValue - rotateValue;
+                rightMotorOutput = -Math.max(-moveValue, -rotateValue);
+            }
+        }
+        this.setPower(leftMotorOutput, rightMotorOutput);
     }
 }

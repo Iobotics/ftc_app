@@ -47,6 +47,7 @@ public class FtcOpModeRegister implements OpModeRegister {
      */
     public void register(OpModeManager manager) {
 
+        boolean k9Bot = true;
         /*
          * register your op modes here.
          * The first parameter is the name of the op mode
@@ -54,12 +55,16 @@ public class FtcOpModeRegister implements OpModeRegister {
          *
          * If two or more op modes are registered with the same name, the app will display an error.
          */
-        manager.register("SuperK9Auto:Blue", new SuperK9Auto3(SuperK9Base.FtcColor.BLUE));
-        manager.register("SuperK9Auto:Red", new SuperK9Auto3(SuperK9Base.FtcColor.RED));
-        manager.register("SuperK9TeleOp", SuperK9TeleOp.class);
-        //manager.register("SuperK9Auto2", new SuperK9Auto2(SuperK9Base.FtcColor.BLUE));
-        //manager.register("SuperK9Auto3", new SuperK9Auto3(SuperK9Base.FtcColor.RED));
-        manager.register("SuperK9Test", new SuperK9Test());
+        if(k9Bot) {
+            manager.register("SuperK9Auto:Blue", new SuperK9Auto3(SuperK9Base.FtcColor.BLUE));
+            manager.register("SuperK9Auto:Red", new SuperK9Auto3(SuperK9Base.FtcColor.RED));
+            manager.register("SuperK9TeleOp", SuperK9TeleOp.class);
+            //manager.register("SuperK9Auto2", new SuperK9Auto2(SuperK9Base.FtcColor.BLUE));
+            //manager.register("SuperK9Auto3", new SuperK9Auto3(SuperK9Base.FtcColor.RED));
+            manager.register("SuperK9Test", new SuperK9Test());
+        } else {
+            manager.register("TankbotTeleOp", TankbotTeleOp.class);
+        }
         //manager.register("TankbotAuto", TankbotAuto.class);
         //manager.register("TankbotTeleOp", TankbotTeleOp.class);
         //manager.register("TankbotTest", TankbotTest.class);

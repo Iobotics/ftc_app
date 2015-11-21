@@ -89,6 +89,8 @@ public abstract class TankbotBase extends OpMode {
     Servo _manServo;
     Servo _leftTrigger;
     Servo _rightTrigger;
+    Servo _leftShield;
+    Servo _rightShield;
 
     boolean _hasRearEncoders = false;
     int _leftEncoderOffset  = 0;
@@ -106,8 +108,8 @@ public abstract class TankbotBase extends OpMode {
         _motorLeftFront = hardwareMap.dcMotor.get("leftFront");
         _motorLeftRear = hardwareMap.dcMotor.get("leftRear");
 
-        _motorLeftFront.setDirection(DcMotor.Direction.REVERSE);
-        _motorLeftRear.setDirection(DcMotor.Direction.REVERSE);
+        _motorRightFront.setDirection(DcMotor.Direction.REVERSE);
+        _motorRightRear.setDirection(DcMotor.Direction.REVERSE);
 
         _manServo = hardwareMap.servo.get("manServo");
         this.setManServoPosition(ManServoPosition.HOME);
@@ -117,6 +119,12 @@ public abstract class TankbotBase extends OpMode {
         this.setRightTriggerDeployed(false);
         _leftTrigger  = hardwareMap.servo.get("leftTrigger");
         this.setLeftTriggerDeployed(false);
+
+        _leftShield = hardwareMap.servo.get("leftShield");
+        this.setLeftShieldPosition(0.0);
+        _rightShield = hardwareMap.servo.get("rightShield");
+        _rightShield.setDirection(Servo.Direction.REVERSE);
+        this.setRightShieldPosition(0.0);
 
         this.setHasRearEncoders(true);
         this.TBInit();
@@ -188,6 +196,24 @@ public abstract class TankbotBase extends OpMode {
 
     protected void setRightTriggerDeployed(boolean out) {
         _rightTrigger.setPosition(out ? TRIGGER_RIGHT_POS_OUT: TRIGGER_RIGHT_POS_IN);
+    }
+
+    protected double getRightShieldPosition() {
+        return _rightShield.getPosition();
+    }
+
+    protected void setRightShieldPosition(double position) {
+        position = Range.clip(position, 0, 1.0);
+        _rightShield.setPosition(position);
+    }
+
+    protected double getLeftShieldPosition() {
+        return _leftShield.getPosition();
+    }
+
+    protected void setLeftShieldPosition(double position) {
+        position = Range.clip(position, 0, 1.0);
+        _leftShield.setPosition(position);
     }
 
 	protected void setPowerScaled(double leftPower, double rightPower) {
