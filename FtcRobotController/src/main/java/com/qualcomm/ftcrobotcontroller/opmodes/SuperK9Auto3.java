@@ -41,11 +41,14 @@ package com.qualcomm.ftcrobotcontroller.opmodes;
 public class SuperK9Auto3 extends SuperK9Base {
 
     private static final double RUN_POWER   = 0.25;
-    //private static final double TURN_POWER  = 0.50;
+    private static final double TURN_POWER  = 0.50;
     private static final double ALIGN_POWER = 0.10;
 
     private static final int INCHES_TO_CENTER = 4;
     private static final int INCHES_TO_BEACON = 5;
+    private static final int INCHES_TO_LEAVE_BEACON = 10;
+    private static final int INCHES_TO_TURN = -16;
+    private static final int INCHES_TO_LEAVE_AREA = 20;
 
     private enum States {
         START,
@@ -70,6 +73,8 @@ public class SuperK9Auto3 extends SuperK9Base {
         PUSH_BUTTON,
         WAIT_FOR_BEACON,
         LEAVE_BEACON,
+        TURN_IN_PLACE,
+        LEAVE_BEACON_AREA,
         STOP
     }
 
@@ -79,8 +84,14 @@ public class SuperK9Auto3 extends SuperK9Base {
     private States _state;
     private final FtcColor _robotColor;
     private FtcColor _sensorColor;
+    private boolean _moveAway;
 
     public SuperK9Auto3(FtcColor robotColor) {
+        this(robotColor, false);
+    }
+
+    public SuperK9Auto3(FtcColor robotColor, boolean moveAway) {
+        _moveAway = moveAway;
         _robotColor = robotColor;
     }
 
@@ -189,6 +200,8 @@ public class SuperK9Auto3 extends SuperK9Base {
                 this.setManServoPosition(ManServoPosition.HOME);
                 if(_doBeacon) {
                     _state = States.READ_COLOR_SENSOR;
+                } else if(_moveAway) {
+                    _state = States.LEAVE_BEACON;
                 } else {
                     _state = States.STOP; //States.LEAVE_BEACON;
                 }
@@ -222,7 +235,17 @@ public class SuperK9Auto3 extends SuperK9Base {
                 }
                 break;
             case LEAVE_BEACON:
-                if(this.autoDriveDistance(INCHES_TO_BEACON, RUN_POWER)) {
+                if(this.autoDriveDistance(INCHES_TO_LEAVE_BEACON, RUN_POWER)) {
+                    _state = States.TURN_IN_PLACE;
+                }
+                break;
+            case TURN_IN_PLACE:
+                if(this.autoTurnInPlace(INCHES_TO_TURN, TURN_POWER)) {
+                    _state = States.LEAVE_BEACON_AREA;
+                }
+                break;
+            case LEAVE_BEACON_AREA:
+                if(this.autoDriveDistance(-INCHES_TO_LEAVE_AREA, RUN_POWER)) {
                     _state = States.STOP;
                 }
                 break;

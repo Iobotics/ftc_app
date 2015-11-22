@@ -58,6 +58,8 @@ public class FtcOpModeRegister implements OpModeRegister {
         if(k9Bot) {
             manager.register("SuperK9Auto:Blue", new SuperK9Auto3(SuperK9Base.FtcColor.BLUE));
             manager.register("SuperK9Auto:Red", new SuperK9Auto3(SuperK9Base.FtcColor.RED));
+            manager.register("SuperK9Auto2:Blue", new SuperK9Auto3(SuperK9Base.FtcColor.BLUE, true));
+            manager.register("SuperK9Auto2:Red", new SuperK9Auto3(SuperK9Base.FtcColor.RED, true));
             manager.register("SuperK9TeleOp", SuperK9TeleOp.class);
             //manager.register("SuperK9Auto2", new SuperK9Auto2(SuperK9Base.FtcColor.BLUE));
             //manager.register("SuperK9Auto3", new SuperK9Auto3(SuperK9Base.FtcColor.RED));

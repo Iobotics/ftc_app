@@ -577,6 +577,7 @@ public abstract class SuperK9Base extends OpMode {
         NONE,
         DRIVE,
         TURN,
+        TURN2,
         WAIT,
         MOVE_TO_LINE, // Note: Decide on a better name
         ALIGN
@@ -644,6 +645,38 @@ public abstract class SuperK9Base extends OpMode {
                 break;
             default:
                 throw new IllegalStateException("turn called without ending previous command: " + _commandState);
+        }
+        return false;
+    }
+
+    // negative is clockwise, positive is counterclockwise //
+    protected boolean autoTurnInPlace(double inches, double speed) {
+        if(speed < 0) throw new IllegalArgumentException("speed: " + speed);
+        speed = Range.clip(speed, 0, 1.0);
+        switch(_commandState) {
+            case NONE:
+                this.resetEncoders();
+                this.setPower(0, 0);
+                _commandState = AutoCommandState.TURN2;
+                break;
+            case TURN2:
+                this.runWithEncoders();
+                double current;
+                if(inches >= 0) {
+                    this.setPower(-speed, speed);
+                    current = this.getRightPositionInches();
+                } else {
+                    this.setPower(speed, -speed);
+                    current = this.getLeftPositionInches();
+                }
+                if(current >= Math.abs(inches)) {
+                    this.setPower(0, 0);
+                    _commandState = AutoCommandState.NONE;
+                    return true;
+                }
+                break;
+            default:
+                throw new IllegalStateException("turn2 called without ending previous command: " + _commandState);
         }
         return false;
     }
