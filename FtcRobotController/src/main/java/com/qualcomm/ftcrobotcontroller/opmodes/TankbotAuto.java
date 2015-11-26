@@ -38,7 +38,8 @@ public class TankbotAuto extends TankbotBase {
     //NOTE: We can only write in write-only, and same for read... need to alternate between them when we need to do both
     private enum StateModes { //Is this state in read-only or write-only mode?
         READ,
-        WRITE
+        WRITE,
+        SWITCHING_STATE
     }
 
     private States _state;
@@ -89,7 +90,7 @@ public class TankbotAuto extends TankbotBase {
 
                         _wheelControllerRight.setMotorControllerDeviceMode(DcMotorController.DeviceMode.WRITE_ONLY);
                         _wheelControllerLeft.setMotorControllerDeviceMode(DcMotorController.DeviceMode.WRITE_ONLY);
-                        _stateMode = StateModes.WRITE;
+                        _stateMode = StateModes.SWITCHING_STATE;
                         break;
                     case WRITE:
                         this.setPower(RUN_POWER, RUN_POWER);
@@ -109,6 +110,19 @@ public class TankbotAuto extends TankbotBase {
                         _wheelControllerLeft.setMotorControllerDeviceMode(DcMotorController.DeviceMode.READ_ONLY);
                         _stateMode = StateModes.READ;
                         break;
+                    case SWITCHING_STATE:
+                        switch(_wheelControllerLeft.getMotorControllerDeviceMode()) {
+                            case SWITCHING_TO_READ_MODE:
+                            case SWITCHING_TO_WRITE_MODE:
+                                break;
+                            case READ_ONLY:
+                                _stateMode = StateModes.READ;
+                                break;
+                            case WRITE_ONLY:
+                                _stateMode = StateModes.WRITE;
+                                break;
+                        }
+                        break;
                 }
                 break;
             case TURN_RIGHT:
@@ -118,7 +132,7 @@ public class TankbotAuto extends TankbotBase {
 
                         _wheelControllerRight.setMotorControllerDeviceMode(DcMotorController.DeviceMode.WRITE_ONLY);
                         _wheelControllerLeft.setMotorControllerDeviceMode(DcMotorController.DeviceMode.WRITE_ONLY);
-                        _stateMode = StateModes.WRITE;
+                        _stateMode = StateModes.SWITCHING_STATE;
                         break;
                     case WRITE:
                         this.setPower(TURN_POWER, 0);
@@ -137,6 +151,19 @@ public class TankbotAuto extends TankbotBase {
                         _wheelControllerLeft.setMotorControllerDeviceMode(DcMotorController.DeviceMode.READ_ONLY);
                         _stateMode = StateModes.READ;
                         break;
+                    case SWITCHING_STATE:
+                        switch(_wheelControllerLeft.getMotorControllerDeviceMode()) {
+                            case SWITCHING_TO_READ_MODE:
+                            case SWITCHING_TO_WRITE_MODE:
+                                break;
+                            case READ_ONLY:
+                                _stateMode = StateModes.READ;
+                                break;
+                            case WRITE_ONLY:
+                                _stateMode = StateModes.WRITE;
+                                break;
+                        }
+                        break;
                 }
                 break;
             case DRIVE_FORWARD2:
@@ -147,7 +174,7 @@ public class TankbotAuto extends TankbotBase {
 
                         _wheelControllerRight.setMotorControllerDeviceMode(DcMotorController.DeviceMode.WRITE_ONLY);
                         _wheelControllerLeft.setMotorControllerDeviceMode(DcMotorController.DeviceMode.WRITE_ONLY);
-                        _stateMode = StateModes.WRITE;
+                        _stateMode = StateModes.SWITCHING_STATE;
                         break;
                     case WRITE:
                         this.setPower(RUN_POWER, RUN_POWER);
@@ -163,6 +190,19 @@ public class TankbotAuto extends TankbotBase {
                         _wheelControllerRight.setMotorControllerDeviceMode(DcMotorController.DeviceMode.READ_ONLY);
                         _wheelControllerLeft.setMotorControllerDeviceMode(DcMotorController.DeviceMode.READ_ONLY);
                         _stateMode = StateModes.READ;
+                        break;
+                    case SWITCHING_STATE:
+                        switch(_wheelControllerLeft.getMotorControllerDeviceMode()) {
+                            case SWITCHING_TO_READ_MODE:
+                            case SWITCHING_TO_WRITE_MODE:
+                                break;
+                            case READ_ONLY:
+                                _stateMode = StateModes.READ;
+                                break;
+                            case WRITE_ONLY:
+                                _stateMode = StateModes.WRITE;
+                                break;
+                        }
                         break;
                 }
                 break;
@@ -205,6 +245,19 @@ public class TankbotAuto extends TankbotBase {
                         _wheelControllerRight.setMotorControllerDeviceMode(DcMotorController.DeviceMode.READ_ONLY);
                         _wheelControllerLeft.setMotorControllerDeviceMode(DcMotorController.DeviceMode.READ_ONLY);
                         _stateMode = StateModes.READ;
+                        break;
+                    case SWITCHING_STATE:
+                        switch(_wheelControllerLeft.getMotorControllerDeviceMode()) {
+                            case SWITCHING_TO_READ_MODE:
+                            case SWITCHING_TO_WRITE_MODE:
+                                break;
+                            case READ_ONLY:
+                                _stateMode = StateModes.READ;
+                                break;
+                            case WRITE_ONLY:
+                                _stateMode = StateModes.WRITE;
+                                break;
+                        }
                         break;
                 }
                 break;

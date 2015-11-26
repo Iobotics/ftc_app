@@ -47,7 +47,7 @@ public class FtcOpModeRegister implements OpModeRegister {
      */
     public void register(OpModeManager manager) {
 
-        boolean k9Bot = true;
+        boolean k9Bot = false;
         /*
          * register your op modes here.
          * The first parameter is the name of the op mode
@@ -66,6 +66,9 @@ public class FtcOpModeRegister implements OpModeRegister {
             manager.register("SuperK9Test", new SuperK9Test());
         } else {
             manager.register("TankbotTeleOp", TankbotTeleOp.class);
+            manager.register("TankbotAuto", TankbotAuto.class);
+            manager.register("TankbotTest", TankbotTest.class);
+            manager.register("TankbotReadOnly", TankbotReadOnly.class);
         }
         //manager.register("TankbotAuto", TankbotAuto.class);
         //manager.register("TankbotTeleOp", TankbotTeleOp.class);
