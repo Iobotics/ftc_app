@@ -116,9 +116,8 @@ public abstract class SuperK9Base extends OpMode {
 	DcMotor _motorLeftFront;
 	DcMotor _motorLeftRear;
     DcMotor _winchMotor;
-    DcMotor _launchMotor;
 
-    Servo _buttonServo;
+    Servo _launchServo;
     Servo _manServo;
     Servo _plowMotor;
     Servo _dozerMotor;
@@ -173,7 +172,8 @@ public abstract class SuperK9Base extends OpMode {
 
         _winchMotor = hardwareMap.dcMotor.get("winchMotor");
         _winchMotor.setPowerFloat();
-        _launchMotor = hardwareMap.dcMotor.get("launchMotor");
+        _launchServo = hardwareMap.servo.get("launchServo");
+        this.setLaunchServoPower(0);
 
 		_cdim = hardwareMap.deviceInterfaceModule.get("dim");
 		_sensorRGB = hardwareMap.colorSensor.get("color");
@@ -194,16 +194,7 @@ public abstract class SuperK9Base extends OpMode {
         _ledInnerBlue.setMode(DigitalChannelController.Mode.OUTPUT);
         this.setInnerLightLEDColor(FtcColor.NONE);
 
-        _buttonServo = hardwareMap.servo.get("buttonServo");
-        _buttonServo.setDirection(Servo.Direction.REVERSE);
-
         _manServo = hardwareMap.servo.get("manServo");
-        if(_teamNumber == TeamNumber.TEAM_8740) {
-            // on 8740, the button servo is used on the man dropper //
-            //_manServo.setDirection(Servo.Direction.REVERSE);
-        } else {
-            this.setButtonServoPosition(ButtonServoPosition.CENTER);
-        }
         this.setManServoPosition(ManServoPosition.HOME);
 
         _rightTrigger = hardwareMap.servo.get("rightTrigger");
@@ -243,7 +234,7 @@ public abstract class SuperK9Base extends OpMode {
     @Override
     public void loop() {
         telemetry.addData("Text", "*** Robot Data***");
-        this.launchMotorLoop();
+        //this.launchMotorLoop();
         this.k9Loop();
 
 		/*
@@ -353,26 +344,6 @@ public abstract class SuperK9Base extends OpMode {
         return _motorLeftFront.isBusy() || _motorRightFront.isBusy();
     }
 
-    protected ButtonServoPosition getButtonServoPosition() {
-        double pos = _buttonServo.getPosition();
-        return  pos == BUTTON_SERVO_POS_LEFT? ButtonServoPosition.LEFT:
-                pos == BUTTON_SERVO_POS_CENTER? ButtonServoPosition.CENTER:
-                        ButtonServoPosition.RIGHT;
-    }
-
-    protected void setButtonServoPosition(ButtonServoPosition pos) {
-        switch (pos) {
-            case LEFT:
-                _buttonServo.setPosition(BUTTON_SERVO_POS_LEFT);
-                break;
-            case CENTER:
-                _buttonServo.setPosition(BUTTON_SERVO_POS_CENTER);
-                break;
-            case RIGHT:
-                _buttonServo.setPosition(BUTTON_SERVO_POS_RIGHT);
-                break;
-        }
-    }
 
     protected ManServoPosition getManServoPosition() {
         double pos = _manServo.getPosition();
@@ -382,40 +353,19 @@ public abstract class SuperK9Base extends OpMode {
     }
 
     protected void setManServoPosition(ManServoPosition pos) {
-        if(_teamNumber == TeamNumber.TEAM_8740) {
-            switch (pos) {
-                case HOME:
-                    _buttonServo.setPosition(MAN_SERVO_POS_HOME);
-                    _manServo.setPosition(MAN_SERVO_POS_HOME);
-                    break;
-                case DEPLOY:
-                    _buttonServo.setPosition(MAN_SERVO_POS_DEPLOY);
-                    _manServo.setPosition(MAN_SERVO_POS_DEPLOY);
-                    break;
-                case HOVER:
-                    _buttonServo.setPosition(MAN_SERVO_POS_HOVER);
-                    _manServo.setPosition(MAN_SERVO_POS_HOVER);
-                    break;
-                case PARK:
-                    _buttonServo.setPosition(MAN_SERVO_POS_PARK);
-                    _manServo.setPosition(MAN_SERVO_POS_PARK);
-                    break;
-            }
-        } else {
-            switch (pos) {
-                case HOME:
-                    _manServo.setPosition(MAN_SERVO_POS_HOME);
-                    break;
-                case DEPLOY:
-                    _manServo.setPosition(MAN_SERVO_POS_DEPLOY);
-                    break;
-                case HOVER:
-                    _manServo.setPosition(MAN_SERVO_POS_HOVER);
-                    break;
-                case PARK:
-                    _manServo.setPosition(MAN_SERVO_POS_PARK);
-                    break;
-            }
+        switch (pos) {
+            case HOME:
+                _manServo.setPosition(MAN_SERVO_POS_HOME);
+                break;
+            case DEPLOY:
+                _manServo.setPosition(MAN_SERVO_POS_DEPLOY);
+                break;
+            case HOVER:
+                _manServo.setPosition(MAN_SERVO_POS_HOVER);
+                break;
+            case PARK:
+                _manServo.setPosition(MAN_SERVO_POS_PARK);
+                break;
         }
     }
 
@@ -464,7 +414,7 @@ public abstract class SuperK9Base extends OpMode {
         _winchMotor.setPower(power);
     }
 
-    protected void startLaunchMotor() {
+    /*protected void startLaunchMotor() {
         // only allow once //
         if(_launchLoopCount > 0) return;
         _launchMotor.setPower(LAUNCH_MOTOR_POWER);
@@ -481,6 +431,11 @@ public abstract class SuperK9Base extends OpMode {
             return;
         }
         _launchLoopCount++;
+    }*/
+
+    protected void setLaunchServoPower(double power) {
+        power = Range.clip(power, -1.0, 1.0);
+        _launchServo.setPosition(0.5 + power / 2);
     }
 
     protected float getColorSensorHue() {

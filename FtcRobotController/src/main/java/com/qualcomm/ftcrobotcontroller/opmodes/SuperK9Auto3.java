@@ -215,7 +215,7 @@ public class SuperK9Auto3 extends SuperK9Base {
                     _state = States.SET_BUTTON_PUSHER;
                 }
                 break;
-            case SET_BUTTON_PUSHER:
+            /*case SET_BUTTON_PUSHER:
                 // sensor senses the right half of the beacon //
                 // if we see our color, choose the right side, otherwise choose the left //
                 this.setButtonServoPosition(_sensorColor == _robotColor? ButtonServoPosition.RIGHT: ButtonServoPosition.LEFT);
@@ -233,7 +233,7 @@ public class SuperK9Auto3 extends SuperK9Base {
                     //_state = States.LEAVE_BEACON;
                     _state = States.STOP;
                 }
-                break;
+                break;*/
             case LEAVE_BEACON:
                 if(this.autoDriveDistance(INCHES_TO_LEAVE_BEACON, RUN_POWER)) {
                     _state = States.TURN_IN_PLACE;

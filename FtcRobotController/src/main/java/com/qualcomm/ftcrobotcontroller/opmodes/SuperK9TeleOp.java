@@ -121,8 +121,12 @@ public class SuperK9TeleOp extends SuperK9Base {
             this.setWinchPower(0.0);
         }
         if(gamepad1.right_stick_button && gamepad1.left_stick_button) {
-            this.startLaunchMotor();
-        }
+            //this.startLaunchMotor();
+            this.setRightTriggerDeployed(true);
+			this.setLaunchServoPower(1.0);
+        } else {
+			this.setLaunchServoPower(0);
+		}
 
 		telemetry.addData("lightOuter", this.getLightOuter());
 		telemetry.addData("lightInner", this.getLightInner());
