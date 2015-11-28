@@ -173,6 +173,7 @@ public abstract class SuperK9Base extends OpMode {
         _winchMotor = hardwareMap.dcMotor.get("winchMotor");
         _winchMotor.setPowerFloat();
         _launchServo = hardwareMap.servo.get("launchServo");
+        _launchServo.setDirection(Servo.Direction.REVERSE);
         this.setLaunchServoPower(0);
 
 		_cdim = hardwareMap.deviceInterfaceModule.get("dim");

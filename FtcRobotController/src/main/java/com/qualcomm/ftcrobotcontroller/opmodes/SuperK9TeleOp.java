@@ -88,7 +88,6 @@ public class SuperK9TeleOp extends SuperK9Base {
 		float left = throttle + direction; */
 		float left = -gamepad1.left_stick_y;
 		float right = -gamepad1.right_stick_y;
-		this.setPowerScaled(left, right);
 
         //ButtonServoPosition pos = gamepad1.dpad_left? ButtonServoPosition.LEFT: gamepad1.dpad_right? ButtonServoPosition.RIGHT: ButtonServoPosition.CENTER;
         //this.setButtonServoPosition(pos);
@@ -124,9 +123,14 @@ public class SuperK9TeleOp extends SuperK9Base {
             //this.startLaunchMotor();
             this.setRightTriggerDeployed(true);
 			this.setLaunchServoPower(1.0);
+            this.setDozerPower(0.25);
+            // disable drive //
+            left = right = 0;
         } else {
 			this.setLaunchServoPower(0);
 		}
+
+        this.setPowerScaled(left, right);
 
 		telemetry.addData("lightOuter", this.getLightOuter());
 		telemetry.addData("lightInner", this.getLightInner());
