@@ -121,7 +121,7 @@ public class SuperK9TeleOp extends SuperK9Base {
         }
         if(gamepad1.right_stick_button && gamepad1.left_stick_button) {
             //this.startLaunchMotor();
-            this.setRightTriggerDeployed(true);
+			this.setRightTriggerDeployed(true);
 			this.setLaunchServoPower(1.0);
             this.setDozerPower(0.25);
             // disable drive //

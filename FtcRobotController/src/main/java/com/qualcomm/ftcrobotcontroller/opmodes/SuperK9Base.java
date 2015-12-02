@@ -106,6 +106,8 @@ public abstract class SuperK9Base extends OpMode {
     final static double TRIGGER_RIGHT_POS_IN  = 0.4;
     final static double TRIGGER_RIGHT_POS_OUT = 1.0;
 
+    final static double TRIGGER_8898_OFFSET = 0.15;
+
     // light sensor configuration //
     final static double INNER_LIGHT_THRESHOLD = 0.3; // note: these should be positive //
     final static double OUTER_LIGHT_THRESHOLD = 0.3;
@@ -143,7 +145,8 @@ public abstract class SuperK9Base extends OpMode {
 
     protected enum TeamNumber {
         TEAM_8740,
-        TEAM_8741
+        TEAM_8741,
+        TEAM_8898
     }
     private TeamNumber _teamNumber;
 
@@ -154,12 +157,18 @@ public abstract class SuperK9Base extends OpMode {
 	 */
 	@Override
 	public void init() {
+        // use "jumper" hardware to determine team number //
         try {
-            DigitalChannel jumper = hardwareMap.digitalChannel.get("robot_8741");
+            hardwareMap.digitalChannel.get("robot_8741");
             _teamNumber = TeamNumber.TEAM_8741;
         } catch(Exception e) {
-            // no jumper set //
-            _teamNumber = TeamNumber.TEAM_8740;
+            try {
+                hardwareMap.digitalChannel.get("robot_8898");
+                _teamNumber = TeamNumber.TEAM_8898;
+            } catch(Exception e2) {
+                // no jumper set //
+                _teamNumber = TeamNumber.TEAM_8740;
+            }
         }
 
 		_motorRightFront = hardwareMap.dcMotor.get("rightFront");
@@ -375,7 +384,8 @@ public abstract class SuperK9Base extends OpMode {
     }
 
     protected void setLeftTriggerDeployed(boolean out) {
-        _leftTrigger.setPosition(out ? TRIGGER_LEFT_POS_OUT: TRIGGER_LEFT_POS_IN);
+        double offset = _teamNumber == TeamNumber.TEAM_8898? -TRIGGER_8898_OFFSET: 0;
+        _leftTrigger.setPosition(out ? TRIGGER_LEFT_POS_OUT: TRIGGER_LEFT_POS_IN + offset);
     }
 
     protected boolean getRightTriggerDeployed() {
@@ -383,7 +393,8 @@ public abstract class SuperK9Base extends OpMode {
     }
 
     protected void setRightTriggerDeployed(boolean out) {
-        _rightTrigger.setPosition(out ? TRIGGER_RIGHT_POS_OUT: TRIGGER_RIGHT_POS_IN);
+        double offset = _teamNumber == TeamNumber.TEAM_8898? TRIGGER_8898_OFFSET: 0;
+        _rightTrigger.setPosition(out ? TRIGGER_RIGHT_POS_OUT: TRIGGER_RIGHT_POS_IN + offset);
     }
 
     protected double getPlowPower() {
