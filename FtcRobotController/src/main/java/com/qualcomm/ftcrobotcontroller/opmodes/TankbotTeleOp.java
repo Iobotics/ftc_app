@@ -85,15 +85,15 @@ public class TankbotTeleOp extends TankbotBase {
         }
 
         if(gamepad1.right_trigger > 0.5) {
-            this.setRightShieldPosition(1.0);
+            this.setDozerPosition(1.0);
         } else if(gamepad1.right_bumper) {
-            this.setRightShieldPosition(0.0);
+            this.setDozerPosition(0.0);
         }
 
         if(gamepad1.left_trigger > 0.5) {
-            this.setLeftShieldPosition(1.0);
+            this.setPlowPosition(1.0);
         } else if(gamepad1.left_bumper) {
-            this.setLeftShieldPosition(0.0);
+            this.setPlowPosition(0.0);
         }
     }
 

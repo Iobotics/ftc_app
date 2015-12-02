@@ -56,16 +56,19 @@ public class FtcOpModeRegister implements OpModeRegister {
          * If two or more op modes are registered with the same name, the app will display an error.
          */
         if(k9Bot) {
-            manager.register("SuperK9Auto:Blue", new SuperK9Auto3(SuperK9Base.FtcColor.BLUE));
-            manager.register("SuperK9Auto:Red", new SuperK9Auto3(SuperK9Base.FtcColor.RED));
-            manager.register("SuperK9Auto2:Blue", new SuperK9Auto3(SuperK9Base.FtcColor.BLUE, true));
-            manager.register("SuperK9Auto2:Red", new SuperK9Auto3(SuperK9Base.FtcColor.RED, true));
+            manager.register("SuperK9Auto1:Blue", new SuperK9Auto3(SuperK9Base.FtcColor.BLUE, SuperK9Auto3.PositionOnField.ONE));
+            manager.register("SuperK9Auto1:Red", new SuperK9Auto3(SuperK9Base.FtcColor.RED, SuperK9Auto3.PositionOnField.ONE));
+            manager.register("SuperK9Auto2:Blue", new SuperK9Auto3(SuperK9Base.FtcColor.BLUE, SuperK9Auto3.PositionOnField.TWO));
+            manager.register("SuperK9Auto2:Red", new SuperK9Auto3(SuperK9Base.FtcColor.RED, SuperK9Auto3.PositionOnField.TWO));
             manager.register("SuperK9TeleOp", SuperK9TeleOp.class);
             //manager.register("SuperK9Auto2", new SuperK9Auto2(SuperK9Base.FtcColor.BLUE));
             //manager.register("SuperK9Auto3", new SuperK9Auto3(SuperK9Base.FtcColor.RED));
             manager.register("SuperK9Test", new SuperK9Test());
         } else {
             manager.register("TankbotTeleOp", TankbotTeleOp.class);
+            manager.register("TankbotAuto", TankbotAuto.class);
+            manager.register("TankbotTest", TankbotTest.class);
+            manager.register("TankbotReadOnly", TankbotReadOnly.class);
         }
         //manager.register("TankbotAuto", TankbotAuto.class);
         //manager.register("TankbotTeleOp", TankbotTeleOp.class);

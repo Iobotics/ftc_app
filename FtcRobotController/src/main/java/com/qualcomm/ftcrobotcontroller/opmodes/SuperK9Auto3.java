@@ -51,6 +51,8 @@ public class SuperK9Auto3 extends SuperK9Base {
     private static final int INCHES_TO_LEAVE_AREA = 20;
 
     private enum States {
+        SET_FIELD_POSITION,
+        WAIT_FOR_START,
         START,
         LOWER_PLOW,
         RESET_LIGHT_SENSORS,
@@ -78,21 +80,26 @@ public class SuperK9Auto3 extends SuperK9Base {
         STOP
     }
 
+    protected enum PositionOnField {
+        ONE,
+        TWO
+    }
+
     // change this to enable beacon pushing //
     private static boolean _doBeacon = false;
 
     private States _state;
     private final FtcColor _robotColor;
     private FtcColor _sensorColor;
-    private boolean _moveAway;
+    private PositionOnField _fieldPosition;
 
     public SuperK9Auto3(FtcColor robotColor) {
-        this(robotColor, false);
+        this(robotColor, PositionOnField.ONE);
     }
 
-    public SuperK9Auto3(FtcColor robotColor, boolean moveAway) {
-        _moveAway = moveAway;
+    public SuperK9Auto3(FtcColor robotColor, PositionOnField pos) {
         _robotColor = robotColor;
+        _fieldPosition = pos;
     }
 
     @Override
@@ -104,13 +111,25 @@ public class SuperK9Auto3 extends SuperK9Base {
     protected void k9Start() {
         this.setInnerLightLEDColor(_robotColor);
         this.setOuterLightLEDColor(_robotColor);
-        _state = States.START;
+        _state = States.SET_FIELD_POSITION;
     }
 
     @Override
     protected void k9Loop() {
         telemetry.addData("State", _state.name());
         switch(_state) {
+            case SET_FIELD_POSITION:
+                if(_fieldPosition == PositionOnField.ONE) {
+                    _state = States.START;
+                } else {
+                    _state = States.WAIT_FOR_START;
+                }
+                break;
+            case WAIT_FOR_START:
+                if(this.autoWaitSeconds(15)) {
+                    _state = States.START;
+                }
+                break;
             case START:
                 this.resetLightSensors();
                 _state = States.LOWER_PLOW;
@@ -200,7 +219,7 @@ public class SuperK9Auto3 extends SuperK9Base {
                 this.setManServoPosition(ManServoPosition.HOME);
                 if(_doBeacon) {
                     _state = States.READ_COLOR_SENSOR;
-                } else if(_moveAway) {
+                } else if(_fieldPosition == PositionOnField.ONE) {
                     _state = States.LEAVE_BEACON;
                 } else {
                     _state = States.STOP; //States.LEAVE_BEACON;

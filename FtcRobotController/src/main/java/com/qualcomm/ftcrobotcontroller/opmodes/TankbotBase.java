@@ -39,6 +39,7 @@ import com.qualcomm.robotcore.hardware.DcMotor;
 import com.qualcomm.robotcore.hardware.DcMotorController;
 import com.qualcomm.robotcore.hardware.DeviceInterfaceModule;
 import com.qualcomm.robotcore.hardware.DigitalChannelController;
+import com.qualcomm.robotcore.hardware.HardwareMap;
 import com.qualcomm.robotcore.hardware.LightSensor;
 import com.qualcomm.robotcore.hardware.OpticalDistanceSensor;
 import com.qualcomm.robotcore.hardware.Servo;
@@ -89,8 +90,10 @@ public abstract class TankbotBase extends OpMode {
     Servo _manServo;
     Servo _leftTrigger;
     Servo _rightTrigger;
-    Servo _leftShield;
-    Servo _rightShield;
+    Servo _leftPlow;
+    Servo _rightPlow;
+    Servo _leftDozer;
+    Servo _rightDozer;
 
     boolean _hasRearEncoders = false;
     int _leftEncoderOffset  = 0;
@@ -120,11 +123,15 @@ public abstract class TankbotBase extends OpMode {
         _leftTrigger  = hardwareMap.servo.get("leftTrigger");
         this.setLeftTriggerDeployed(false);
 
-        _leftShield = hardwareMap.servo.get("leftShield");
-        this.setLeftShieldPosition(0.0);
-        _rightShield = hardwareMap.servo.get("rightShield");
-        _rightShield.setDirection(Servo.Direction.REVERSE);
-        this.setRightShieldPosition(0.0);
+        _leftPlow = hardwareMap.servo.get("leftPlow");
+        _rightPlow = hardwareMap.servo.get("rightPlow");
+        _rightPlow.setDirection(Servo.Direction.REVERSE);
+        this.setPlowPosition(0.0);
+
+        _leftDozer = hardwareMap.servo.get("leftDozer");
+        _rightDozer = hardwareMap.servo.get("rightDozer");
+        _rightDozer.setDirection(Servo.Direction.REVERSE);
+        this.setDozerPosition(0.0);
 
         this.setHasRearEncoders(true);
         this.TBInit();
@@ -198,22 +205,24 @@ public abstract class TankbotBase extends OpMode {
         _rightTrigger.setPosition(out ? TRIGGER_RIGHT_POS_OUT: TRIGGER_RIGHT_POS_IN);
     }
 
-    protected double getRightShieldPosition() {
-        return _rightShield.getPosition();
+    protected double getDozerPosition() {
+        return _leftDozer.getPosition();
     }
 
-    protected void setRightShieldPosition(double position) {
+    protected void setDozerPosition(double position) {
         position = Range.clip(position, 0, 1.0);
-        _rightShield.setPosition(position);
+        _leftDozer.setPosition(position);
+        _rightDozer.setPosition(position);
     }
 
-    protected double getLeftShieldPosition() {
-        return _leftShield.getPosition();
+    protected double getPlowPosition() {
+        return _leftPlow.getPosition();
     }
 
-    protected void setLeftShieldPosition(double position) {
+    protected void setPlowPosition(double position) {
         position = Range.clip(position, 0, 1.0);
-        _leftShield.setPosition(position);
+        _leftPlow.setPosition(position);
+        _rightPlow.setPosition(position);
     }
 
 	protected void setPowerScaled(double leftPower, double rightPower) {

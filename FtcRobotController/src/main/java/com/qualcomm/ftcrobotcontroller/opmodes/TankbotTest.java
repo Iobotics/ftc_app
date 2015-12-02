@@ -19,8 +19,8 @@ public class TankbotTest extends OpMode {
     DcMotor _motorLeftFront;
     DcMotor _motorLeftRear;
 
-    DcMotorController wheelControllerFront;
-    DcMotorController wheelControllerRear;
+    DcMotorController _wheelControllerFront;
+    DcMotorController _wheelControllerRear;
 
     private enum StateModes {
         READ,
@@ -43,11 +43,11 @@ public class TankbotTest extends OpMode {
         _motorLeftFront.setDirection(DcMotor.Direction.REVERSE);
         _motorLeftRear.setDirection(DcMotor.Direction.REVERSE);
 
-        wheelControllerFront = hardwareMap.dcMotorController.get("wheelMotorFront");
-        wheelControllerFront.setMotorControllerDeviceMode(DcMotorController.DeviceMode.WRITE_ONLY);
+        _wheelControllerFront = hardwareMap.dcMotorController.get("wheelMotorFront");
+        _wheelControllerFront.setMotorControllerDeviceMode(DcMotorController.DeviceMode.WRITE_ONLY);
 
-        wheelControllerRear = hardwareMap.dcMotorController.get("wheelMotorRear");
-        wheelControllerRear.setMotorControllerDeviceMode(DcMotorController.DeviceMode.WRITE_ONLY);
+        _wheelControllerRear = hardwareMap.dcMotorController.get("wheelMotorRear");
+        _wheelControllerRear.setMotorControllerDeviceMode(DcMotorController.DeviceMode.WRITE_ONLY);
 
         _currentState = StateModes.WAIT_FOR_SWITCH;
     }
@@ -65,19 +65,19 @@ public class TankbotTest extends OpMode {
                 telemetry.addData("Left encoder", String.format("%.2f", _leftPositionInches));
                 telemetry.addData("Right encoder", String.format("%.2f", _rightPositionInches));
 
-                wheelControllerFront.setMotorControllerDeviceMode(DcMotorController.DeviceMode.WRITE_ONLY);
-                //wheelControllerRear.setMotorControllerDeviceMode(DcMotorController.DeviceMode.WRITE_ONLY);
+                _wheelControllerFront.setMotorControllerDeviceMode(DcMotorController.DeviceMode.WRITE_ONLY);
+                _wheelControllerRear.setMotorControllerDeviceMode(DcMotorController.DeviceMode.WRITE_ONLY);
                 _currentState = StateModes.WAIT_FOR_SWITCH;
                 break;
             case WRITE:
                 setPowerScaled(left, right);
 
-                wheelControllerFront.setMotorControllerDeviceMode(DcMotorController.DeviceMode.READ_ONLY);
-                //wheelControllerRear.setMotorControllerDeviceMode(DcMotorController.DeviceMode.READ_ONLY);
+                _wheelControllerFront.setMotorControllerDeviceMode(DcMotorController.DeviceMode.READ_ONLY);
+                _wheelControllerRear.setMotorControllerDeviceMode(DcMotorController.DeviceMode.READ_ONLY);
                 _currentState = StateModes.WAIT_FOR_SWITCH;
                 break;
             case WAIT_FOR_SWITCH:
-                switch(wheelControllerFront.getMotorControllerDeviceMode()) {
+                switch(_wheelControllerFront.getMotorControllerDeviceMode()) {
                     case SWITCHING_TO_READ_MODE:
                     case SWITCHING_TO_WRITE_MODE:
                         break;
@@ -100,9 +100,9 @@ public class TankbotTest extends OpMode {
 
     private void setPower(double left, double right) {
         _motorRightFront.setPower(right);
-        //_motorRightRear.setPower(right);
+        _motorRightRear.setPower(right);
         _motorLeftFront.setPower(left);
-        //_motorLeftRear.setPower(left);
+        _motorLeftRear.setPower(left);
     }
 
     private int getLeftEncoder() {
