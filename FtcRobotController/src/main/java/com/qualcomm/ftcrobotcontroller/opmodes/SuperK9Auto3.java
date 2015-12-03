@@ -40,13 +40,13 @@ package com.qualcomm.ftcrobotcontroller.opmodes;
  */
 public class SuperK9Auto3 extends SuperK9Base {
 
-    private static final double RUN_POWER   = 0.25;
+    private static final double RUN_POWER   = 0.25; // Test 0.50 later
     private static final double TURN_POWER  = 0.50;
     private static final double ALIGN_POWER = 0.10;
 
     private static final int INCHES_TO_CENTER = 4;
     private static final int INCHES_TO_BEACON = 5;
-    private static final int INCHES_TO_LEAVE_BEACON = 10;
+    private static final int INCHES_TO_LEAVE_BEACON = 14; // Previous value: 10
     private static final int INCHES_TO_TURN = -16;
     private static final int INCHES_TO_LEAVE_AREA = 20;
 
@@ -76,13 +76,14 @@ public class SuperK9Auto3 extends SuperK9Base {
         SET_BUTTON_PUSHER,
         PUSH_BUTTON,
         WAIT_FOR_BEACON,
+        LOWER_DOZER,
         LEAVE_BEACON,
         TURN_IN_PLACE,
         LEAVE_BEACON_AREA,
         STOP
     }
 
-    protected enum PositionOnField {
+    protected enum RobotNumber {
         ONE,
         TWO
     }
@@ -93,15 +94,15 @@ public class SuperK9Auto3 extends SuperK9Base {
     private States _state;
     private final FtcColor _robotColor;
     private FtcColor _sensorColor;
-    private PositionOnField _fieldPosition;
+    private RobotNumber _botNumber;
 
     public SuperK9Auto3(FtcColor robotColor) {
-        this(robotColor, PositionOnField.ONE);
+        this(robotColor, RobotNumber.ONE);
     }
 
-    public SuperK9Auto3(FtcColor robotColor, PositionOnField pos) {
+    public SuperK9Auto3(FtcColor robotColor, RobotNumber num) {
         _robotColor = robotColor;
-        _fieldPosition = pos;
+        _botNumber = num;
     }
 
     @Override
@@ -121,7 +122,7 @@ public class SuperK9Auto3 extends SuperK9Base {
         telemetry.addData("State", _state.name());
         switch(_state) {
             case SET_FIELD_POSITION:
-                if(_fieldPosition == PositionOnField.ONE) {
+                if(_botNumber == RobotNumber.ONE) {
                     _state = States.START;
                 } else {
                     _state = States.WAIT_FOR_START;
@@ -223,10 +224,10 @@ public class SuperK9Auto3 extends SuperK9Base {
                 this.setManServoPosition(ManServoPosition.HOME);
                 if(_doBeacon) {
                     _state = States.READ_COLOR_SENSOR;
-                } else if(_fieldPosition == PositionOnField.ONE) {
+                } else if(_botNumber == RobotNumber.ONE) {
                     _state = States.LEAVE_BEACON;
                 } else {
-                    _state = States.STOP; //States.LEAVE_BEACON;
+                    _state = States.STOP;
                 }
                 break;
             case READ_COLOR_SENSOR:
@@ -257,13 +258,22 @@ public class SuperK9Auto3 extends SuperK9Base {
                     _state = States.STOP;
                 }
                 break;*/
-            case LEAVE_BEACON:
-                if(this.autoDriveDistance(INCHES_TO_LEAVE_BEACON, RUN_POWER)) {
-                    _state = States.TURN_IN_PLACE;
+            case LOWER_DOZER:
+                this.setDozerPower(-1.0);
+                if(this.autoWaitSeconds(1.5)) {
+                    this.setDozerPower(0.0);
+                    _state = States.LEAVE_BEACON;
                 }
                 break;
+            case LEAVE_BEACON:
+                if(this.autoDriveDistance(INCHES_TO_LEAVE_BEACON, RUN_POWER)) {
+                    //_state = States.TURN_IN_PLACE;
+                    _state = States.STOP;
+                }
+                break;
+            /*
             case TURN_IN_PLACE:
-                if(this.autoTurnInPlace(INCHES_TO_TURN, TURN_POWER)) {
+                if(this.autoTurnInPlace(-INCHES_TO_TURN, TURN_POWER)) {
                     _state = States.LEAVE_BEACON_AREA;
                 }
                 break;
@@ -272,6 +282,7 @@ public class SuperK9Auto3 extends SuperK9Base {
                     _state = States.STOP;
                 }
                 break;
+            */
             case STOP:
                 break;
         }
