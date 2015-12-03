@@ -50,6 +50,8 @@ public class SuperK9Auto3 extends SuperK9Base {
     private static final int INCHES_TO_TURN = -16;
     private static final int INCHES_TO_LEAVE_AREA = 20;
 
+    private static final int SENSOR_OFFSET_8898 = 4;
+
     private enum States {
         SET_FIELD_POSITION,
         WAIT_FOR_START,
@@ -159,7 +161,9 @@ public class SuperK9Auto3 extends SuperK9Base {
                 }
                 break;
             case CENTER_ON_LINE:
-                if(this.autoDriveDistance(-INCHES_TO_CENTER, RUN_POWER)) {
+                // offset sensor for 8898 //
+                double toCenter = INCHES_TO_CENTER + (this.getTeamNumber() == TeamNumber.TEAM_8898? SENSOR_OFFSET_8898: 0);
+                if(this.autoDriveDistance(-toCenter, RUN_POWER)) {
                     _state = States.WAIT_FOR_ALIGN;
                 }
                 break;

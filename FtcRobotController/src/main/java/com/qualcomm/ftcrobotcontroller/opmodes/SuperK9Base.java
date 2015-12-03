@@ -118,6 +118,7 @@ public abstract class SuperK9Base extends OpMode {
 	DcMotor _motorLeftFront;
 	DcMotor _motorLeftRear;
     DcMotor _winchMotor;
+    DcMotor _launchMotor;
 
     Servo _launchServo;
     Servo _manServo;
@@ -183,7 +184,8 @@ public abstract class SuperK9Base extends OpMode {
         _winchMotor.setPowerFloat();
         _launchServo = hardwareMap.servo.get("launchServo");
         _launchServo.setDirection(Servo.Direction.REVERSE);
-        this.setLaunchServoPower(0);
+        _launchMotor = hardwareMap.dcMotor.get("launchMotor");
+        this.setLaunchReleasePower(0);
 
 		_cdim = hardwareMap.deviceInterfaceModule.get("dim");
 		_sensorRGB = hardwareMap.colorSensor.get("color");
@@ -445,9 +447,14 @@ public abstract class SuperK9Base extends OpMode {
         _launchLoopCount++;
     }*/
 
-    protected void setLaunchServoPower(double power) {
+    protected void setLaunchReleasePower(double power) {
         power = Range.clip(power, -1.0, 1.0);
         _launchServo.setPosition(0.5 + power / 2);
+        if(power != 0){
+            _launchMotor.setPower(power);
+        } else {
+            _launchMotor.setPowerFloat();
+        }
     }
 
     protected float getColorSensorHue() {
