@@ -242,6 +242,13 @@ public abstract class SuperK9Base extends OpMode {
         this.k9Init();
 	}
 
+    @Override
+    public void init_loop() {
+        telemetry.addData("Gyro Heading", _gyro.isCalibrating()? "calibrating": _gyro.getHeading());
+        telemetry.addData("Gyro Integrator", _gyro.isCalibrating()? "calibrating": _gyro.getIntegratedZValue());
+        this.k9InitLoop();
+    }
+
     /*
      * This method will be called on start
      *
@@ -293,6 +300,8 @@ public abstract class SuperK9Base extends OpMode {
     }
 
     protected void k9Init() { }
+
+    protected void k9InitLoop() { }
 
     protected void k9Start() { }
 
