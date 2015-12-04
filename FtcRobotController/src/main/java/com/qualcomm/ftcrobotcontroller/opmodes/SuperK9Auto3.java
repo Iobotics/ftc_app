@@ -152,7 +152,7 @@ public class SuperK9Auto3 extends SuperK9Base {
                 }
                 break;
             case DRIVE_TO_LINE:
-                if(this.autoDriveToLine(RUN_POWER)) {
+                if(this.autoDriveToLine(-RUN_POWER)) {
                     _state = States.WAIT_FOR_CENTER;
                 }
                 break;
@@ -175,7 +175,7 @@ public class SuperK9Auto3 extends SuperK9Base {
                 break;
             case ALIGN_TO_LINE:
                 // align in direction based on color //
-                if(this.autoAlignToLine(_robotColor == FtcColor.RED ? ALIGN_POWER : -ALIGN_POWER)) {
+                if(this.autoTurnToLine(_robotColor == FtcColor.RED ? ALIGN_POWER : -ALIGN_POWER)) {
                     _state = States.WAIT_TO_APPROACH;
                 }
                 break;

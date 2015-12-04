@@ -610,13 +610,15 @@ public abstract class SuperK9Base extends OpMode {
     private enum AutoCommandState {
         NONE,
         DRIVE,
-        TURN,
-        TURN2,
+        PIVOT_TURN,
+        IN_PLACE_TURN,
+        PID_DRIVE,
+        PID_TURN,
         GYRO_DRIVE,
         GYRO_TURN,
         WAIT,
-        MOVE_TO_LINE, // Note: Decide on a better name
-        ALIGN
+        DRIVE_TO_LINE,
+        TURN_TO_LINE
     }
     private AutoCommandState _commandState = AutoCommandState.NONE;
 
@@ -657,6 +659,39 @@ public abstract class SuperK9Base extends OpMode {
         return false;
     }
 
+    // use PID control to move a precise distance //
+    private final double PID_DRIVE_GAIN             = 0.5;
+    private final double PID_DRIVE_TOLERANCE_INCHES = 0.5;
+    protected boolean autoDriveDistancePID(double inches, double speed) {
+        if(speed < 0) throw new IllegalArgumentException("speed: " + speed);
+        speed = Range.clip(speed, 0, 1.0);
+        switch(_commandState) {
+            case NONE:
+                this.resetEncoders();
+                this.setPower(0, 0);
+                _commandState = AutoCommandState.PID_DRIVE;
+                break;
+            case PID_DRIVE:
+                this.runWithEncoders();
+                // get distances //
+                double left  = this.getLeftPositionInches();
+                double right = this.getRightPositionInches();
+
+                double error = inches - left; // use left pos for now //
+                double power = Range.clip(PID_DRIVE_GAIN * error, -1.0, 1.0);
+                this.setPower(power, power);
+                if(Math.abs(error) < PID_DRIVE_TOLERANCE_INCHES) {
+                    this.setPower(0, 0);
+                    _commandState = AutoCommandState.NONE;
+                    return true;
+                }
+                break;
+            default:
+                throw new IllegalStateException("pid drive called without ending previous command: " + _commandState);
+        }
+        return false;
+    }
+
     // negative is clockwise, positive is counterclockwise //
     protected boolean autoTurnPivot(double inches, double speed) {
         if(speed < 0) throw new IllegalArgumentException("speed: " + speed);
@@ -665,9 +700,9 @@ public abstract class SuperK9Base extends OpMode {
             case NONE:
                 this.resetEncoders();
                 this.setPower(0, 0);
-                _commandState = AutoCommandState.TURN;
+                _commandState = AutoCommandState.PIVOT_TURN;
                 break;
-            case TURN:
+            case PIVOT_TURN:
                 this.runWithEncoders();
                 double current;
                 if(inches >= 0) {
@@ -684,7 +719,7 @@ public abstract class SuperK9Base extends OpMode {
                 }
                 break;
             default:
-                throw new IllegalStateException("turn called without ending previous command: " + _commandState);
+                throw new IllegalStateException("pivot turn called without ending previous command: " + _commandState);
         }
         return false;
     }
@@ -697,9 +732,9 @@ public abstract class SuperK9Base extends OpMode {
             case NONE:
                 this.resetEncoders();
                 this.setPower(0, 0);
-                _commandState = AutoCommandState.TURN2;
+                _commandState = AutoCommandState.IN_PLACE_TURN;
                 break;
-            case TURN2:
+            case IN_PLACE_TURN:
                 this.runWithEncoders();
                 double current;
                 if(inches >= 0) {
@@ -716,11 +751,47 @@ public abstract class SuperK9Base extends OpMode {
                 }
                 break;
             default:
-                throw new IllegalStateException("turn2 called without ending previous command: " + _commandState);
+                throw new IllegalStateException("turn in place called without ending previous command: " + _commandState);
         }
         return false;
     }
-    private double GYRO_DRIVE_GAIN = 0.025;
+
+    // negative is clockwise, positive is counterclockwise //
+    private final double PID_TURN_GAIN             = 0.5;
+    private final double PID_TURN_TOLERANCE_INCHES = 0.5;
+    protected boolean autoTurnInPlacePID(double inches, double speed) {
+        if(speed < 0) throw new IllegalArgumentException("speed: " + speed);
+        speed = Range.clip(speed, 0, 1.0);
+        switch(_commandState) {
+            case NONE:
+                this.resetEncoders();
+                this.setPower(0, 0);
+                _commandState = AutoCommandState.PID_TURN;
+                break;
+            case PID_TURN:
+                this.runWithEncoders();
+                // get distances //
+                double left  = this.getLeftPositionInches();
+                double right = this.getRightPositionInches();
+
+                double error = inches - right;
+                double power = Range.clip(PID_TURN_GAIN * error, -1.0, 1.0);
+                this.setPower(-power, power);
+                if(Math.abs(error) < PID_TURN_TOLERANCE_INCHES) {
+                    this.setPower(0, 0);
+                    _commandState = AutoCommandState.NONE;
+                    return true;
+                }
+                break;
+            default:
+                throw new IllegalStateException("pid turn called without ending previous command: " + _commandState);
+        }
+        return false;
+    }
+
+    // use a gyro to drive straight for certain distance //
+    // FIXME: does not work, should use PID for position also //
+    private final double GYRO_DRIVE_GAIN = 0.025;
     protected boolean autoDriveDistanceGyro(double inches, double speed) {
         if(speed < 0) throw new IllegalArgumentException("speed: " + speed);
         speed = Range.clip(speed, 0, 1.0);
@@ -737,11 +808,10 @@ public abstract class SuperK9Base extends OpMode {
             case GYRO_DRIVE:
                 this.runWithEncoders();
                 // get heading and normalize to +/- 180 //
-                /*double heading = _gyro.getHeading();
+                double heading = _gyro.getHeading();
                 if(heading > 180) heading = heading - 360;
                 double correction = (0 - heading) * GYRO_DRIVE_GAIN;
-                this.setPower(this.sign(inches) * speed + correction, this.sign(inches) * speed - correction);*/
-
+                this.setPower(this.sign(inches) * speed + correction, this.sign(inches) * speed - correction);
                 // check if we are at target distance //
                 double left  = this.getLeftPositionInches();
                 double right = this.getRightPositionInches();
@@ -760,8 +830,8 @@ public abstract class SuperK9Base extends OpMode {
     }
 
     // negative is clockwise, positive is counterclockwise //
-    private double GYRO_TURN_GAIN         = 0.025;
-    private double GYRO_TOLERANCE_DEGREES = 5;
+    private final double GYRO_TURN_GAIN         = 0.025;
+    private final double GYRO_TOLERANCE_DEGREES = 5;
     protected boolean autoTurnInPlaceGyro(double degrees, double speed) {
         if(Math.abs(degrees) > 180) throw new IllegalArgumentException("degrees: " + degrees);
         if(speed < 0) throw new IllegalArgumentException("speed: " + speed);
@@ -816,53 +886,48 @@ public abstract class SuperK9Base extends OpMode {
         return false;
     }
 
+    // positive is forward, negative is reverse //
     protected boolean autoDriveToLine(double speed) {
-        if(speed < 0) throw new IllegalArgumentException("speed: " + speed);
-        speed = Range.clip(speed, 0, 1.0);
+        speed = Range.clip(speed, -1.0, 1.0);
         switch(_commandState) {
             case NONE:
                 this.setPower(0, 0);
-                //this.setInnerLightLEDEnabled(true);
-                _commandState = AutoCommandState.MOVE_TO_LINE;
+                _commandState = AutoCommandState.DRIVE_TO_LINE;
                 break;
-            case MOVE_TO_LINE:
+            case DRIVE_TO_LINE:
                 this.runWithEncoders();
-                this.setPower(-speed, -speed);
-                //this.setPower(speed, speed);
+                this.setPower(speed, speed);
                 if(this.isInnerLineDetected()) {
                     this.setPower(0, 0);
-                    //this.setInnerLightLEDEnabled(false);
                     _commandState = AutoCommandState.NONE;
                     return true;
                 }
                 break;
             default:
-                throw new IllegalStateException("move to line called without ending previous command: " + _commandState);
+                throw new IllegalStateException("drive to line called without ending previous command: " + _commandState);
         }
         return false;
     }
 
-    protected boolean autoAlignToLine(double speed) {
-        if(speed < -1.0 || speed > 1.0) throw new IllegalArgumentException("speed: " + speed);
+    // positive is counter-clockwise, negative is clockwise //
+    protected boolean autoTurnToLine(double speed) {
+        speed = Range.clip(speed, -1.0, 1.0);
         switch(_commandState) {
             case NONE:
                 this.setPower(0, 0);
-                //this.setOuterLightLEDEnabled(true);
-                _commandState = AutoCommandState.ALIGN;
+                _commandState = AutoCommandState.TURN_TO_LINE;
                 break;
-            case ALIGN:
+            case TURN_TO_LINE:
                 this.runWithEncoders();
                 this.setPower(-speed, speed);
-                //this.setPower(speed, -speed);
                 if(this.isOuterLineDetected()) {
                     this.setPower(0, 0);
-                    //this.setOuterLightLEDEnabled(false);
                     _commandState = AutoCommandState.NONE;
                     return true;
                 }
                 break;
             default:
-                throw new IllegalStateException("align called without ending previous command: " + _commandState);
+                throw new IllegalStateException("turn to line called without ending previous command: " + _commandState);
         }
         return false;
     }
