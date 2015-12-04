@@ -40,6 +40,7 @@ import com.qualcomm.robotcore.hardware.DcMotorController;
 import com.qualcomm.robotcore.hardware.DeviceInterfaceModule;
 import com.qualcomm.robotcore.hardware.DigitalChannel;
 import com.qualcomm.robotcore.hardware.DigitalChannelController;
+import com.qualcomm.robotcore.hardware.GyroSensor;
 import com.qualcomm.robotcore.hardware.LightSensor;
 import com.qualcomm.robotcore.hardware.Servo;
 import com.qualcomm.robotcore.util.ElapsedTime;
@@ -135,6 +136,8 @@ public abstract class SuperK9Base extends OpMode {
     DigitalChannel _ledInnerRed, _ledInnerBlue;
     LightSensor _lightOuter;
     DigitalChannel _ledOuterRed, _ledOuterBlue;
+    GyroSensor _gyro;
+
     final ElapsedTime _time = new ElapsedTime();
 
     int _leftEncoderOffset  = 0;
@@ -181,7 +184,12 @@ public abstract class SuperK9Base extends OpMode {
 		_motorRightRear.setDirection(DcMotor.Direction.REVERSE);
 
         _winchMotor = hardwareMap.dcMotor.get("winchMotor");
+        if(_teamNumber == TeamNumber.TEAM_8898) {
+            // reverse winch on 8898 //
+            _winchMotor.setDirection(DcMotor.Direction.REVERSE);
+        }
         _winchMotor.setPowerFloat();
+
         _launchServo = hardwareMap.servo.get("launchServo");
         _launchServo.setDirection(Servo.Direction.REVERSE);
         _launchMotor = hardwareMap.dcMotor.get("launchMotor");
@@ -222,7 +230,11 @@ public abstract class SuperK9Base extends OpMode {
         _dozerMotor = hardwareMap.servo.get("dozerMotor");
         this.setDozerPower(0);
 
-
+        try {
+            _gyro = hardwareMap.gyroSensor.get("gyro");
+            _gyro.calibrate();
+        } catch(Exception e) {
+        }
         this.k9Init();
 	}
 
@@ -245,7 +257,7 @@ public abstract class SuperK9Base extends OpMode {
      */
     @Override
     public void loop() {
-        telemetry.addData("Text", "*** Robot Data***");
+        telemetry.addData("Text", "*** Robot Data ***");
         //this.launchMotorLoop();
         this.k9Loop();
 
@@ -428,25 +440,6 @@ public abstract class SuperK9Base extends OpMode {
         _winchMotor.setPower(power);
     }
 
-    /*protected void startLaunchMotor() {
-        // only allow once //
-        if(_launchLoopCount > 0) return;
-        _launchMotor.setPower(LAUNCH_MOTOR_POWER);
-        _launchLoopCount++;
-        _launcherRunning = true;
-    }
-
-    private void launchMotorLoop() {
-        if(!_launcherRunning) return;
-        // reset after a fixed number of loops //
-        if(_launchLoopCount >= LAUNCH_LOOP_COUNT) {
-            _launchMotor.setPower(0.0);
-            _launcherRunning = false;
-            return;
-        }
-        _launchLoopCount++;
-    }*/
-
     protected void setLaunchReleasePower(double power) {
         power = Range.clip(power, -1.0, 1.0);
         _launchServo.setPosition(0.5 + power / 2);
@@ -552,11 +545,17 @@ public abstract class SuperK9Base extends OpMode {
         DRIVE,
         TURN,
         TURN2,
+        GYRO_DRIVE,
+        GYRO_TURN,
         WAIT,
         MOVE_TO_LINE, // Note: Decide on a better name
         ALIGN
     }
     private AutoCommandState _commandState = AutoCommandState.NONE;
+
+    protected double getTime() {
+        return _time.time();
+    }
 
     protected void autoEnd() {
         _commandState = AutoCommandState.NONE;
@@ -655,17 +654,91 @@ public abstract class SuperK9Base extends OpMode {
         return false;
     }
 
+    private double GYRO_DRIVE_GAIN = 0.025;
+    protected boolean autoDriveDistanceGyro(double inches, double speed) {
+        if(speed < 0) throw new IllegalArgumentException("speed: " + speed);
+        speed = Range.clip(speed, 0, 1.0);
+        if(_gyro == null) {
+            throw new IllegalStateException("Gyro is not present");
+        }
+        switch(_commandState) {
+            case NONE:
+                this.resetEncoders();
+                _gyro.resetZAxisIntegrator();
+                this.setPower(0, 0);
+                _commandState = AutoCommandState.GYRO_DRIVE;
+                break;
+            case GYRO_DRIVE:
+                this.runWithEncoders();
+                // get heading and normalize to +/- 180 //
+                double heading = _gyro.getHeading();
+                if(heading > 180) heading = heading - 360;
+                double correction = (0 - heading) * GYRO_DRIVE_GAIN;
+                this.setPower(this.sign(inches) * speed + correction, this.sign(inches) * speed - correction);
+                // check if we are at target distance //
+                double left  = this.getLeftPositionInches();
+                double right = this.getRightPositionInches();
+                if(  (inches >= 0 && left >= inches && right >= inches)
+                        || (inches < 0  && left <= inches && right <= inches))
+                {
+                    this.setPower(0, 0);
+                    _commandState = AutoCommandState.NONE;
+                    return true;
+                }
+                break;
+            default:
+                throw new IllegalStateException("drive called without ending previous command: " + _commandState);
+        }
+        return false;
+    }
+
+    // negative is clockwise, positive is counterclockwise //
+    private double GYRO_TURN_GAIN         = 0.025;
+    private double GYRO_TOLERANCE_DEGREES = 5;
+    protected boolean autoTurnInPlaceGyro(double degrees, double speed) {
+        if(Math.abs(degrees) > 180) throw new IllegalArgumentException("degrees: " + degrees);
+        if(speed < 0) throw new IllegalArgumentException("speed: " + speed);
+        speed = Range.clip(speed, 0, 1.0);
+        if(_gyro == null) {
+            throw new IllegalStateException("Gyro is not present");
+        }
+        switch(_commandState) {
+            case NONE:
+                _gyro.resetZAxisIntegrator();
+                this.setPower(0, 0);
+                _commandState = AutoCommandState.GYRO_TURN;
+                break;
+            case GYRO_TURN:
+                this.runWithEncoders();
+                // get heading and normalize //
+                double heading = _gyro.getHeading();
+                if(heading > 180) heading = heading - 360;
+                if(Math.abs(degrees - heading) < GYRO_TOLERANCE_DEGREES) {
+                    _commandState = AutoCommandState.NONE;
+                    return true;
+                } else {
+                    double power = Range.clip((degrees - heading) * GYRO_TURN_GAIN, -1.0, 1.0);
+                    this.setPower(power, -power);
+                }
+
+                break;
+            default:
+                throw new IllegalStateException("gyro turn called without ending previous command: " + _commandState);
+        }
+        return false;
+    }
+
     // wait for a specific number of seconds //
     private double _autoWaitStart = 0;
     protected boolean autoWaitSeconds(double seconds) {
         if(seconds < 0) throw new IllegalArgumentException("seconds: " + seconds);
         switch(_commandState) {
             case NONE:
-                _autoWaitStart = _time.time();
+                _autoWaitStart = this.getTime();
                 _commandState  = AutoCommandState.WAIT;
                 break;
             case WAIT:
-                if(_time.time() > _autoWaitStart + seconds) {
+                if(this.getTime() > _autoWaitStart + seconds) {
                     _commandState = AutoCommandState.NONE;
                     return true;
                 }

@@ -55,27 +55,30 @@ public class FtcOpModeRegister implements OpModeRegister {
          *
          * If two or more op modes are registered with the same name, the app will display an error.
          */
-        if(k9Bot) {
-            manager.register("SuperK9Auto1:Blue", new SuperK9Auto3(SuperK9Base.FtcColor.BLUE, SuperK9Auto3.RobotNumber.ONE));
-            manager.register("SuperK9Auto1:Red", new SuperK9Auto3(SuperK9Base.FtcColor.RED, SuperK9Auto3.RobotNumber.ONE));
-            manager.register("SuperK9Auto2:Blue", new SuperK9Auto3(SuperK9Base.FtcColor.BLUE, SuperK9Auto3.RobotNumber.TWO));
-            manager.register("SuperK9Auto2:Red", new SuperK9Auto3(SuperK9Base.FtcColor.RED, SuperK9Auto3.RobotNumber.TWO));
-            manager.register("SuperK9TeleOp", SuperK9TeleOp.class);
-            //manager.register("SuperK9Auto2", new SuperK9Auto2(SuperK9Base.FtcColor.BLUE));
-            //manager.register("SuperK9Auto3", new SuperK9Auto3(SuperK9Base.FtcColor.RED));
-            manager.register("SuperK9Test", new SuperK9Test());
-        } else {
-            manager.register("TankbotTeleOp", TankbotTeleOp.class);
-            manager.register("TankbotAuto", TankbotAuto.class);
-            manager.register("TankbotTest", TankbotTest.class);
-            manager.register("TankbotReadOnly", TankbotReadOnly.class);
-        }
+        /*
+        manager.register("SuperK9Auto1:Blue", new SuperK9Auto3(SuperK9Base.FtcColor.BLUE, SuperK9Auto3.RobotNumber.ONE));
+        manager.register("SuperK9Auto1:Red", new SuperK9Auto3(SuperK9Base.FtcColor.RED, SuperK9Auto3.RobotNumber.ONE));
+        manager.register("SuperK9Auto2:Blue", new SuperK9Auto3(SuperK9Base.FtcColor.BLUE, SuperK9Auto3.RobotNumber.TWO));
+        manager.register("SuperK9Auto2:Red", new SuperK9Auto3(SuperK9Base.FtcColor.RED, SuperK9Auto3.RobotNumber.TWO));
+        */
+        manager.register("Auto:Blue (Solo)",   new SuperK9Auto4(SuperK9Base.FtcColor.BLUE, false, SuperK9Auto4.EndBehavior.DO_NOTHING));
+        manager.register("Auto:Red (Solo)",    new SuperK9Auto4(SuperK9Base.FtcColor.RED,  false, SuperK9Auto4.EndBehavior.DO_NOTHING));
+
+        manager.register("Auto:Red (First)",   new SuperK9Auto4(SuperK9Base.FtcColor.RED,  false, SuperK9Auto4.EndBehavior.LEAVE_BEACON));
+        manager.register("Auto:Blue (First)",  new SuperK9Auto4(SuperK9Base.FtcColor.BLUE, false, SuperK9Auto4.EndBehavior.LEAVE_BEACON));
+        manager.register("Auto:Red (Second)",  new SuperK9Auto4(SuperK9Base.FtcColor.RED,  true,  SuperK9Auto4.EndBehavior.DO_NOTHING));
+        manager.register("Auto:Blue (Second)", new SuperK9Auto4(SuperK9Base.FtcColor.BLUE, true,  SuperK9Auto4.EndBehavior.DO_NOTHING));
+
+        manager.register("SuperK9TeleOp", SuperK9TeleOp.class);
+
+        //manager.register("SuperK9Test", new SuperK9Test());
         //manager.register("TankbotAuto", TankbotAuto.class);
         //manager.register("TankbotTeleOp", TankbotTeleOp.class);
         //manager.register("TankbotTest", TankbotTest.class);
         //manager.register("TankbotTest2", TankbotTest2.class);
 
         manager.register("NullOp", NullOp.class);
+        manager.register("GyroTest", MRGyroTest.class);
 
         //manager.register("MatrixK9TeleOp", MatrixK9TeleOp.class);
         //manager.register("K9TeleOp", K9TeleOp.class);
