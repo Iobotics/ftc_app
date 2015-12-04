@@ -78,19 +78,7 @@ public class SuperK9TeleOp extends SuperK9Base {
 	 */
 	@Override
 	public void k9Loop() {
-		// throttle: left_stick_y ranges from -1 to 1, where -1 is full up, and
-		// 1 is full down
-		// direction: left_stick_x ranges from -1 to 1, where -1 is full left
-		// and 1 is full right
-		/* float throttle = -gamepad1.left_stick_y;
-		float direction = gamepad1.left_stick_x;
-		float right = throttle - direction;
-		float left = throttle + direction; */
-		float left = -gamepad1.left_stick_y;
-		float right = -gamepad1.right_stick_y;
-
-        //ButtonServoPosition pos = gamepad1.dpad_left? ButtonServoPosition.LEFT: gamepad1.dpad_right? ButtonServoPosition.RIGHT: ButtonServoPosition.CENTER;
-        //this.setButtonServoPosition(pos);
+		boolean disableDrive = false;
 
 		if(gamepad1.dpad_left) {
 			this.setLeftTriggerDeployed(true);
@@ -127,12 +115,25 @@ public class SuperK9TeleOp extends SuperK9Base {
 			this.setLaunchReleasePower(1.0);
             this.setDozerPower(0.25);
             // disable drive //
-            left = right = 0;
+            disableDrive = true;
+        } else if(gamepad1.start) {
+            this.setLaunchReleasePower(-0.5);
         } else {
 			this.setLaunchReleasePower(0);
 		}
 
-        this.setPowerScaled(left, right);
+		if(disableDrive) {
+			this.setPower(0, 0);
+		} else if(this.getTeamNumber() == TeamNumber.TEAM_8898) {
+			double power = -gamepad1.right_stick_y;
+			double turn  = -gamepad1.left_stick_x;
+			this.setPowerArcade(power, turn, true);
+		} else {
+			// tank drive //
+			float left = -gamepad1.left_stick_y;
+			float right = -gamepad1.right_stick_y;
+			this.setPowerScaled(left, right);
+		}
 
 		telemetry.addData("lightOuter", this.getLightOuter());
 		telemetry.addData("lightInner", this.getLightInner());
