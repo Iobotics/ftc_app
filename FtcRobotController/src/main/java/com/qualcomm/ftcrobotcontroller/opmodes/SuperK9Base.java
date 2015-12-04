@@ -83,6 +83,8 @@ public abstract class SuperK9Base extends OpMode {
 
     final static double PLOW_POWER_MIN = -0.25;
     final static double PLOW_POWER_MAX = 0.5;
+    final static double PLOW_POWER_MIN2 = -0.15;
+    final static double PLOW_POWER_MAX2 = 0.25;
 
     final static double DOZER_POWER_MIN = -0.35;
     final static double DOZER_POWER_MAX = 0.5;
@@ -120,6 +122,7 @@ public abstract class SuperK9Base extends OpMode {
 	DcMotor _motorLeftRear;
     DcMotor _winchMotor;
     DcMotor _launchMotor;
+    DcMotor _plowMotor2;
 
     Servo _launchServo;
     Servo _manServo;
@@ -146,6 +149,7 @@ public abstract class SuperK9Base extends OpMode {
     double _lightOuterOffset = 0.0;
     int _launchLoopCount = 0;
     boolean _launcherRunning = false;
+    boolean _gyroCalibrated = false;
 
     protected enum TeamNumber {
         TEAM_8740,
@@ -225,16 +229,16 @@ public abstract class SuperK9Base extends OpMode {
         this.setLeftTriggerDeployed(false);
 
         _plowMotor = hardwareMap.servo.get("plowMotor");
+        try {
+            _plowMotor2 = hardwareMap.dcMotor.get("plowMotor2");
+        } catch(Exception e) {
+        }
         this.setPlowPower(0);
 
         _dozerMotor = hardwareMap.servo.get("dozerMotor");
         this.setDozerPower(0);
 
-        try {
-            _gyro = hardwareMap.gyroSensor.get("gyro");
-            _gyro.calibrate();
-        } catch(Exception e) {
-        }
+        _gyro = hardwareMap.gyroSensor.get("gyro");
         this.k9Init();
 	}
 
@@ -269,8 +273,9 @@ public abstract class SuperK9Base extends OpMode {
 		 */
         telemetry.addData("Left encoder", String.format("%.2f", this.getLeftPositionInches()));
         telemetry.addData("Right encoder", String.format("%.2f", this.getRightPositionInches()));
-        telemetry.addData("Plow power", String.format("%.2f", this.getPlowPower()));
-        telemetry.addData("Dozer power", String.format("%.2f", this.getDozerPower()));
+        //telemetry.addData("Plow power", String.format("%.2f", this.getPlowPower()));
+        //telemetry.addData("Dozer power", String.format("%.2f", this.getDozerPower()));
+        telemetry.addData("Gyro Heading", _gyro.getHeading());
         telemetry.addData("Team #", this.getTeamNumber());
         //telemetry.addData("Color (Hue)", String.format("%s (%.2f)", this.getColorSensor(), this.getColorSensorHue()));
         //telemetry.addData("ODS", String.format("%.2f", this.getODSLight()));
@@ -297,6 +302,48 @@ public abstract class SuperK9Base extends OpMode {
 
     protected TeamNumber getTeamNumber() {
         return _teamNumber;
+    }
+
+    void setPowerArcade(double moveValue, double rotateValue, boolean squaredInputs) {
+        // local variables to hold the computed PWM values for the motors
+        double leftMotorOutput;
+        double rightMotorOutput;
+
+        moveValue = Range.clip(moveValue, -1.0, 1.0);
+        rotateValue = Range.clip(rotateValue, -1.0, 1.0);
+
+        if (squaredInputs) {
+            // square the inputs (while preserving the sign) to increase fine control while permitting full power
+            if (moveValue >= 0.0) {
+                moveValue = (moveValue * moveValue);
+            } else {
+                moveValue = -(moveValue * moveValue);
+            }
+            if (rotateValue >= 0.0) {
+                rotateValue = (rotateValue * rotateValue);
+            } else {
+                rotateValue = -(rotateValue * rotateValue);
+            }
+        }
+
+        if (moveValue > 0.0) {
+            if (rotateValue > 0.0) {
+                leftMotorOutput = moveValue - rotateValue;
+                rightMotorOutput = Math.max(moveValue, rotateValue);
+            } else {
+                leftMotorOutput = Math.max(moveValue, -rotateValue);
+                rightMotorOutput = moveValue + rotateValue;
+            }
+        } else {
+            if (rotateValue > 0.0) {
+                leftMotorOutput = -Math.max(-moveValue, rotateValue);
+                rightMotorOutput = moveValue + rotateValue;
+            } else {
+                leftMotorOutput = moveValue - rotateValue;
+                rightMotorOutput = -Math.max(-moveValue, -rotateValue);
+            }
+        }
+        this.setPower(leftMotorOutput, rightMotorOutput);
     }
 
 	protected void setPowerScaled(double leftPower, double rightPower) {
@@ -417,8 +464,11 @@ public abstract class SuperK9Base extends OpMode {
 
     // negative is deploy, positive retract //
     protected void setPlowPower(double power) {
-        power = (Range.clip(power, PLOW_POWER_MIN, PLOW_POWER_MAX) + 1) / 2;
-        _plowMotor.setPosition(power);
+        double xpower = (Range.clip(power, PLOW_POWER_MIN, PLOW_POWER_MAX) + 1) / 2;
+        _plowMotor.setPosition(xpower);
+        if(_plowMotor2 != null) {
+            _plowMotor2.setPower(Range.clip(power, PLOW_POWER_MIN2, PLOW_POWER_MAX2));
+        }
     }
 
     protected double getDozerPower() {
@@ -448,6 +498,10 @@ public abstract class SuperK9Base extends OpMode {
         } else {
             _launchMotor.setPowerFloat();
         }
+    }
+
+    protected GyroSensor getGyro() {
+        return _gyro;
     }
 
     protected float getColorSensorHue() {
