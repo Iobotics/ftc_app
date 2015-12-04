@@ -40,13 +40,14 @@ package com.qualcomm.ftcrobotcontroller.opmodes;
  */
 public class SuperK9Auto4 extends SuperK9Base {
 
-    private static final double RUN_POWER     = 0.25; // Test 0.50 later
-    private static final double RETREAT_POWER = 0.5;
-    private static final double TURN_POWER    = 0.50;
-    private static final double ALIGN_POWER   = 0.10;
+    private static final double RUN_POWER      = 0.25; // Test 0.50 later
+    private static final double FAST_RUN_POWER = 0.75;
+    private static final double TURN_POWER     = 0.50;
+    private static final double ALIGN_POWER    = 0.10;
 
     private static final double PARTNER_WAIT_SECONDS = 15;
 
+    private static final int INCHES_TO_APPROACH_FAST = 60;
     private static final int INCHES_TO_CENTER = 4;
     private static final int INCHES_TO_BEACON = 5;
     private static final int INCHES_TO_LEAVE_BEACON = 40;
@@ -56,10 +57,11 @@ public class SuperK9Auto4 extends SuperK9Base {
     private static final int SENSOR_OFFSET_8898 = 4;
 
     private enum States {
-        WAIT_FOR_PARTNER,
         START,
         LOWER_PLOW,
         RESET_LIGHT_SENSORS,
+        WAIT_FOR_PARTNER,
+        APPROACH_LINE_FAST,
         DRIVE_TO_LINE,
         WAIT_FOR_CENTER,
         CENTER_ON_LINE,
@@ -68,13 +70,14 @@ public class SuperK9Auto4 extends SuperK9Base {
         WAIT_TO_APPROACH,
         DRIVE_TO_BEACON,
         WAIT_FOR_MAN,
+        START_LOWER_DOZER,
         DEPLOY_MAN_DROPPER,
         RESET_MAN_DROPPER,
         HOVER_MAN_DROPPER,
         DEPLOY_MAN_DROPPER2,
+        STOP_LOWER_DOZER,
         RESET_MAN_DROPPER2,
-        LOWER_DOZER,
-        LEAVE_BEACON,
+        LEAVE_BEACON_FAST,
         TURN_IN_PLACE,
         DRIVE_TO_MOUNTAIN,
         STOP
@@ -130,17 +133,21 @@ public class SuperK9Auto4 extends SuperK9Base {
                 }
                 break;
             case RESET_LIGHT_SENSORS:
-                if(this.autoWaitSeconds(1.0)) {
+                if(this.autoWaitSeconds(0.5)) {
                     this.resetLightSensors();
                     // wait for partner or go immediately //
-                    _state = _waitForPartner? States.WAIT_FOR_PARTNER: States.DRIVE_TO_LINE;
+                    _state = _waitForPartner? States.WAIT_FOR_PARTNER: States.APPROACH_LINE_FAST; //States.DRIVE_TO_LINE;
                 }
                 break;
             case WAIT_FOR_PARTNER:
                 if(this.autoWaitSeconds(PARTNER_WAIT_SECONDS)) {
-                    _state = States.DRIVE_TO_LINE;
+                    _state = States.APPROACH_LINE_FAST; //States.DRIVE_TO_LINE;
                 }
                 break;
+            case APPROACH_LINE_FAST:
+                if(this.autoDriveDistance(INCHES_TO_APPROACH_FAST, FAST_RUN_POWER)) {
+                    _state = States.DRIVE_TO_LINE;
+                }
             case DRIVE_TO_LINE:
                 if(this.autoDriveToLine(RUN_POWER)) {
                     _state = States.WAIT_FOR_CENTER;
@@ -181,14 +188,24 @@ public class SuperK9Auto4 extends SuperK9Base {
                 break;
             case WAIT_FOR_MAN:
                 if(this.autoWaitSeconds(0.5)) {
-                    _state = States.DEPLOY_MAN_DROPPER;
+                    // start lowering the dozer if we're doing things after //
+                    _state = _endBehavior != EndBehavior.DO_NOTHING? States.START_LOWER_DOZER: States.DEPLOY_MAN_DROPPER;
                 }
+                break;
+            case START_LOWER_DOZER:
+                this.setDozerPower(-1.0);
+                _state = States.DEPLOY_MAN_DROPPER;
                 break;
             case DEPLOY_MAN_DROPPER:
                 this.setManServoPosition(ManServoPosition.DEPLOY);
                 if(this.autoWaitSeconds(2.0)) {
-                    _state = States.RESET_MAN_DROPPER;
+                    // if lowering dozer, stop it now //
+                    _state = _endBehavior != EndBehavior.DO_NOTHING? States.STOP_LOWER_DOZER: States.RESET_MAN_DROPPER;
                 }
+                break;
+            case STOP_LOWER_DOZER:
+                this.setDozerPower(0);
+                _state = States.RESET_MAN_DROPPER;
                 break;
             case RESET_MAN_DROPPER:
                 this.setManServoPosition(ManServoPosition.HOME);
@@ -209,17 +226,10 @@ public class SuperK9Auto4 extends SuperK9Base {
             case RESET_MAN_DROPPER2:
                 this.setManServoPosition(ManServoPosition.HOME);
                 // if no end behavior, stop here //
-                _state = _endBehavior == EndBehavior.DO_NOTHING? States.STOP: States.LOWER_DOZER;
+                _state = _endBehavior == EndBehavior.DO_NOTHING? States.STOP: States.LEAVE_BEACON_FAST;
                 break;
-            case LOWER_DOZER:
-                this.setDozerPower(-1.0);
-                if(this.autoWaitSeconds(1.5)) {
-                    this.setDozerPower(0.0);
-                    _state = States.LEAVE_BEACON;
-                }
-                break;
-            case LEAVE_BEACON:
-                if(this.autoDriveDistance(INCHES_TO_LEAVE_BEACON, RETREAT_POWER)) {
+            case LEAVE_BEACON_FAST:
+                if(this.autoDriveDistance(INCHES_TO_LEAVE_BEACON, FAST_RUN_POWER)) {
                     // if only leaving the beacon, stop here //
                     _state = _endBehavior == EndBehavior.LEAVE_BEACON? States.STOP: States.TURN_IN_PLACE;
                 }
