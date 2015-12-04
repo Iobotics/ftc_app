@@ -50,6 +50,14 @@ public class SuperK9Auto2 extends SuperK9Base {
         _robotColor = robotColor;
     }
 
+    private enum States {
+        START,
+        CALIBRATING,
+        RUNNING,
+        STOP
+    }
+    private States _state;
+
     @Override
     protected void k9Init() {
 
@@ -58,16 +66,36 @@ public class SuperK9Auto2 extends SuperK9Base {
     @Override
     protected void k9Start() {
         this.runWithEncoders();
-        this.setPower(-RUN_POWER, -RUN_POWER);
-        _running = true;
+        _state = States.START;
     }
 
     @Override
     protected void k9Loop() {
-        telemetry.addData("Light", this.getLightOuter());
-        if(_running && this.getLightOuter() < OUTER_LIGHT_THRESHOLD) {
-            this.setPower(0, 0);
-            _running = false;
+        telemetry.addData("State", _state.name());
+        switch(_state) {
+            case START:
+                this.setPower(0, 0);
+                this.getGyro().calibrate();
+                _state = States.CALIBRATING;
+                break;
+            case CALIBRATING:
+                if(this.autoWaitSeconds(2.0)) {
+                    _state = States.RUNNING;
+                }
+                break;
+            case RUNNING:
+                if(this.autoTurnInPlaceGyro(90, TURN_POWER)) {
+                    _state = States.STOP;
+                }
+                break;
+            case STOP:
+                this.setPower(0, 0);
+                break;
         }
+    }
+
+    @Override
+    protected void k9Stop() {
+        _state = States.STOP;
     }
 }
