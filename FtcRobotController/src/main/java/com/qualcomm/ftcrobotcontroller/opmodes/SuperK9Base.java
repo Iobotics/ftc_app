@@ -33,6 +33,7 @@ package com.qualcomm.ftcrobotcontroller.opmodes;
 
 import android.graphics.Color;
 
+import com.qualcomm.hardware.ModernRoboticsI2cGyro;
 import com.qualcomm.robotcore.eventloop.opmode.OpMode;
 import com.qualcomm.robotcore.hardware.ColorSensor;
 import com.qualcomm.robotcore.hardware.DcMotor;
@@ -139,7 +140,7 @@ public abstract class SuperK9Base extends OpMode {
     DigitalChannel _ledInnerRed, _ledInnerBlue;
     LightSensor _lightOuter;
     DigitalChannel _ledOuterRed, _ledOuterBlue;
-    GyroSensor _gyro;
+    ModernRoboticsI2cGyro _gyro;
 
     final ElapsedTime _time = new ElapsedTime();
 
@@ -147,9 +148,7 @@ public abstract class SuperK9Base extends OpMode {
     int _rightEncoderOffset = 0;
     double _lightInnerOffset = 0.0;
     double _lightOuterOffset = 0.0;
-    int _launchLoopCount = 0;
-    boolean _launcherRunning = false;
-    boolean _gyroCalibrated = false;
+    int _gyroHeadingOffset = 0;
 
     protected enum TeamNumber {
         TEAM_8740,
@@ -238,7 +237,8 @@ public abstract class SuperK9Base extends OpMode {
         _dozerMotor = hardwareMap.servo.get("dozerMotor");
         this.setDozerPower(0);
 
-        _gyro = hardwareMap.gyroSensor.get("gyro");
+        _gyro = (ModernRoboticsI2cGyro) hardwareMap.gyroSensor.get("gyro");
+        _gyro.setHeadingMode(ModernRoboticsI2cGyro.HeadingMode.HEADING_CARTESIAN);
         this.k9Init();
 	}
 
@@ -250,7 +250,6 @@ public abstract class SuperK9Base extends OpMode {
     @Override
     public void start() {
         _time.reset();
-        _launchLoopCount = 0;
         this.k9Start();
     }
 
@@ -261,7 +260,7 @@ public abstract class SuperK9Base extends OpMode {
      */
     @Override
     public void loop() {
-        telemetry.addData("Text", "*** Robot Data ***");
+        //telemetry.addData("Text", "*** Robot Data ***");
         //this.launchMotorLoop();
         this.k9Loop();
 
@@ -275,7 +274,8 @@ public abstract class SuperK9Base extends OpMode {
         telemetry.addData("Right encoder", String.format("%.2f", this.getRightPositionInches()));
         //telemetry.addData("Plow power", String.format("%.2f", this.getPlowPower()));
         //telemetry.addData("Dozer power", String.format("%.2f", this.getDozerPower()));
-        telemetry.addData("Gyro Heading", _gyro.getHeading());
+        telemetry.addData("Gyro Heading", _gyro.isCalibrating()? "calibrating": _gyro.getHeading());
+        telemetry.addData("Gyro Integrator", _gyro.isCalibrating()? "calibrating": _gyro.getIntegratedZValue());
         telemetry.addData("Team #", this.getTeamNumber());
         //telemetry.addData("Color (Hue)", String.format("%s (%.2f)", this.getColorSensor(), this.getColorSensorHue()));
         //telemetry.addData("ODS", String.format("%.2f", this.getODSLight()));
@@ -500,8 +500,21 @@ public abstract class SuperK9Base extends OpMode {
         }
     }
 
-    protected GyroSensor getGyro() {
-        return _gyro;
+    protected void calibrateGyro() {
+        _gyro.calibrate();
+    }
+
+    protected boolean isGyroCalibrating() {
+        return _gyro.isCalibrating();
+    }
+
+    protected int getGyroHeading() {
+        return _gyro.getHeading();
+        //return _gyro.getIntegratedZValue();
+    }
+
+    protected void resetGyroHeading() {
+        _gyroHeadingOffset = _gyro.getHeading();
     }
 
     protected float getColorSensorHue() {
@@ -707,7 +720,6 @@ public abstract class SuperK9Base extends OpMode {
         }
         return false;
     }
-
     private double GYRO_DRIVE_GAIN = 0.025;
     protected boolean autoDriveDistanceGyro(double inches, double speed) {
         if(speed < 0) throw new IllegalArgumentException("speed: " + speed);
@@ -718,17 +730,18 @@ public abstract class SuperK9Base extends OpMode {
         switch(_commandState) {
             case NONE:
                 this.resetEncoders();
-                _gyro.resetZAxisIntegrator();
+                this.resetGyroHeading();
                 this.setPower(0, 0);
                 _commandState = AutoCommandState.GYRO_DRIVE;
                 break;
             case GYRO_DRIVE:
                 this.runWithEncoders();
                 // get heading and normalize to +/- 180 //
-                double heading = _gyro.getHeading();
+                /*double heading = _gyro.getHeading();
                 if(heading > 180) heading = heading - 360;
                 double correction = (0 - heading) * GYRO_DRIVE_GAIN;
-                this.setPower(this.sign(inches) * speed + correction, this.sign(inches) * speed - correction);
+                this.setPower(this.sign(inches) * speed + correction, this.sign(inches) * speed - correction);*/
+
                 // check if we are at target distance //
                 double left  = this.getLeftPositionInches();
                 double right = this.getRightPositionInches();
