@@ -40,16 +40,17 @@ package com.qualcomm.ftcrobotcontroller.opmodes;
  */
 public class SuperK9Auto4 extends SuperK9Base {
 
-    private static final double RUN_POWER   = 0.25; // Test 0.50 later
-    private static final double TURN_POWER  = 0.50;
-    private static final double ALIGN_POWER = 0.10;
+    private static final double RUN_POWER     = 0.25; // Test 0.50 later
+    private static final double RETREAT_POWER = 0.5;
+    private static final double TURN_POWER    = 0.50;
+    private static final double ALIGN_POWER   = 0.10;
 
     private static final double PARTNER_WAIT_SECONDS = 15;
 
     private static final int INCHES_TO_CENTER = 4;
     private static final int INCHES_TO_BEACON = 5;
-    private static final int INCHES_TO_LEAVE_BEACON = 24;
-    private static final int INCHES_TO_TURN = -16;
+    private static final int INCHES_TO_LEAVE_BEACON = 40;
+    private static final int INCHES_TO_TURN = -40;
     private static final int INCHES_TO_MOUNTAIN = 20;
 
     private static final int SENSOR_OFFSET_8898 = 4;
@@ -179,7 +180,7 @@ public class SuperK9Auto4 extends SuperK9Base {
                 }
                 break;
             case WAIT_FOR_MAN:
-                if(this.autoWaitSeconds(1.0)) {
+                if(this.autoWaitSeconds(0.5)) {
                     _state = States.DEPLOY_MAN_DROPPER;
                 }
                 break;
@@ -195,13 +196,13 @@ public class SuperK9Auto4 extends SuperK9Base {
                 break;
             case HOVER_MAN_DROPPER:
                 this.setManServoPosition(ManServoPosition.HOVER);
-                if(this.autoWaitSeconds(1.0)) {
+                if(this.autoWaitSeconds(0.5)) {
                     _state = States.DEPLOY_MAN_DROPPER2;
                 }
                 break;
             case DEPLOY_MAN_DROPPER2:
                 this.setManServoPosition(ManServoPosition.DEPLOY);
-                if(this.autoWaitSeconds(1.0)) {
+                if(this.autoWaitSeconds(0.5)) {
                     _state = States.RESET_MAN_DROPPER2;
                 }
                 break;
@@ -218,7 +219,7 @@ public class SuperK9Auto4 extends SuperK9Base {
                 }
                 break;
             case LEAVE_BEACON:
-                if(this.autoDriveDistance(INCHES_TO_LEAVE_BEACON, RUN_POWER)) {
+                if(this.autoDriveDistance(INCHES_TO_LEAVE_BEACON, RETREAT_POWER)) {
                     // if only leaving the beacon, stop here //
                     _state = _endBehavior == EndBehavior.LEAVE_BEACON? States.STOP: States.TURN_IN_PLACE;
                 }
