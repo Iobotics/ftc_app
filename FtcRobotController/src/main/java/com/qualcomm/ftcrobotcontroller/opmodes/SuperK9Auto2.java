@@ -60,7 +60,7 @@ public class SuperK9Auto2 extends SuperK9Base {
 
     @Override
     protected void k9Init() {
-
+        this.calibrateGyro();
     }
 
     @Override
@@ -75,18 +75,15 @@ public class SuperK9Auto2 extends SuperK9Base {
         switch(_state) {
             case START:
                 this.setPower(0, 0);
-                this.getGyro().calibrate();
-                _state = States.CALIBRATING;
+                _state = this.isGyroCalibrating()? States.CALIBRATING: States.RUNNING;
                 break;
             case CALIBRATING:
-                if(this.autoWaitSeconds(2.0)) {
+                if(!this.isGyroCalibrating()) {
                     _state = States.RUNNING;
                 }
                 break;
             case RUNNING:
-                if(this.autoTurnInPlaceGyro(90, TURN_POWER)) {
-                    _state = States.STOP;
-                }
+
                 break;
             case STOP:
                 this.setPower(0, 0);
