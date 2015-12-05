@@ -33,6 +33,7 @@ package com.qualcomm.ftcrobotcontroller.opmodes;
 
 import android.graphics.Color;
 
+import com.qualcomm.ftccommon.DbgLog;
 import com.qualcomm.hardware.ModernRoboticsI2cGyro;
 import com.qualcomm.robotcore.eventloop.opmode.OpMode;
 import com.qualcomm.robotcore.hardware.ColorSensor;
@@ -245,7 +246,7 @@ public abstract class SuperK9Base extends OpMode {
     @Override
     public void init_loop() {
         telemetry.addData("Gyro Heading", _gyro.isCalibrating()? "calibrating": _gyro.getHeading());
-        telemetry.addData("Gyro Integrator", _gyro.isCalibrating()? "calibrating": _gyro.getIntegratedZValue());
+        //telemetry.addData("Gyro Integrator", _gyro.isCalibrating()? "calibrating": _gyro.getIntegratedZValue());
         this.k9InitLoop();
     }
 
@@ -281,8 +282,8 @@ public abstract class SuperK9Base extends OpMode {
         telemetry.addData("Right encoder", String.format("%.2f", this.getRightPositionInches()));
         //telemetry.addData("Plow power", String.format("%.2f", this.getPlowPower()));
         //telemetry.addData("Dozer power", String.format("%.2f", this.getDozerPower()));
-        telemetry.addData("Gyro Heading", _gyro.isCalibrating()? "calibrating": _gyro.getHeading());
-        telemetry.addData("Gyro Integrator", _gyro.isCalibrating()? "calibrating": _gyro.getIntegratedZValue());
+        telemetry.addData("Gyro Heading", _gyro.isCalibrating()? "calibrating": this.getGyroHeading());
+        //telemetry.addData("Gyro Integrator", _gyro.isCalibrating()? "calibrating": _gyro.getIntegratedZValue());
         telemetry.addData("Team #", this.getTeamNumber());
         //telemetry.addData("Color (Hue)", String.format("%s (%.2f)", this.getColorSensor(), this.getColorSensorHue()));
         //telemetry.addData("ODS", String.format("%.2f", this.getODSLight()));
@@ -518,12 +519,11 @@ public abstract class SuperK9Base extends OpMode {
     }
 
     protected int getGyroHeading() {
-        return _gyro.getHeading();
-        //return _gyro.getIntegratedZValue();
+        return _gyro.getIntegratedZValue() - _gyroHeadingOffset;
     }
 
     protected void resetGyroHeading() {
-        _gyroHeadingOffset = _gyro.getHeading();
+        _gyroHeadingOffset = _gyro.getIntegratedZValue();
     }
 
     protected float getColorSensorHue() {
@@ -839,8 +839,10 @@ public abstract class SuperK9Base extends OpMode {
     }
 
     // negative is clockwise, positive is counterclockwise //
-    private final double GYRO_TURN_GAIN         = 0.025;
-    private final double GYRO_TOLERANCE_DEGREES = 5;
+    private final double GYRO_TURN_P_GAIN       = 0.01;
+    private final double GYRO_TURN_D_GAIN       = 0.1;
+    private final double GYRO_TOLERANCE_DEGREES = 1;
+    private double _lastGyroTurnError = 0;
     protected boolean autoTurnInPlaceGyro(double degrees, double speed) {
         if(Math.abs(degrees) > 180) throw new IllegalArgumentException("degrees: " + degrees);
         if(speed < 0) throw new IllegalArgumentException("speed: " + speed);
@@ -850,23 +852,24 @@ public abstract class SuperK9Base extends OpMode {
         }
         switch(_commandState) {
             case NONE:
-                _gyro.resetZAxisIntegrator();
                 this.setPower(0, 0);
+                this.resetGyroHeading();
                 _commandState = AutoCommandState.GYRO_TURN;
                 break;
             case GYRO_TURN:
                 this.runWithEncoders();
                 // get heading and normalize //
-                double heading = _gyro.getHeading();
-                if(heading > 180) heading = heading - 360;
-                if(Math.abs(degrees - heading) < GYRO_TOLERANCE_DEGREES) {
+                double error = degrees - this.getGyroHeading();
+                double d_error = (error - _lastGyroTurnError);
+                double power = Range.clip(error * GYRO_TURN_P_GAIN + d_error * GYRO_TURN_D_GAIN, -speed, speed);
+                //DbgLog.msg("error: " + error + ", d_error: " + d_error + ", power: " + power);
+                if(Math.abs(error) < GYRO_TOLERANCE_DEGREES) {
                     _commandState = AutoCommandState.NONE;
                     return true;
                 } else {
-                    double power = Range.clip((degrees - heading) * GYRO_TURN_GAIN, -1.0, 1.0);
-                    this.setPower(power, -power);
+                    this.setPower(-power, power);
                 }
-
+                _lastGyroTurnError = error;
                 break;
             default:
                 throw new IllegalStateException("gyro turn called without ending previous command: " + _commandState);

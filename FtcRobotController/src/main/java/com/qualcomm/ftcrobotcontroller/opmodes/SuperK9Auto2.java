@@ -83,7 +83,9 @@ public class SuperK9Auto2 extends SuperK9Base {
                 }
                 break;
             case RUNNING:
-
+                if(this.autoTurnInPlaceGyro(-45, 0.25)) {
+                    _state = States.STOP;
+                }
                 break;
             case STOP:
                 this.setPower(0, 0);
