@@ -64,6 +64,7 @@ public class SuperK9Auto4 extends SuperK9Base {
     private static final int DEGREES_TO_MOUNTAIN = 55;
 
     private static final int SENSOR_OFFSET_8898 = 4;
+    private static final int DEGREE_OFFSET_8898 = 0;
 
     private enum States {
         START,
@@ -179,7 +180,8 @@ public class SuperK9Auto4 extends SuperK9Base {
                 }
                 break;
             case TURN_FOR_APPROACH_OUTER:
-                if (this.autoTurnInPlaceGyro(_robotColor == FtcColor.RED ? DEGREES_TO_TURN_OUTER : -DEGREES_TO_TURN_OUTER, GYRO_TURN_POWER)) {
+                double degreesOuter = DEGREES_TO_TURN_OUTER + ((this.getTeamNumber() == TeamNumber.TEAM_8898)? DEGREE_OFFSET_8898: 0);
+                if (this.autoTurnInPlaceGyro(_robotColor == FtcColor.RED ?  degreesOuter: -degreesOuter, GYRO_TURN_POWER)) {
                     _state = States.APPROACH_LINE_FAST_OUTER;
                 }
                 break;
@@ -189,7 +191,8 @@ public class SuperK9Auto4 extends SuperK9Base {
                 }
                 break;
             case TURN_FOR_APPROACH_INNER:
-                if (this.autoTurnInPlaceGyro(_robotColor == FtcColor.RED ? DEGREES_TO_TURN_INNER : -DEGREES_TO_TURN_INNER, GYRO_TURN_POWER)) {
+                double degreesInner = DEGREES_TO_TURN_INNER + ((this.getTeamNumber() == TeamNumber.TEAM_8898)? DEGREE_OFFSET_8898: 0);
+                if (this.autoTurnInPlaceGyro(_robotColor == FtcColor.RED ?  degreesInner: -degreesInner, GYRO_TURN_POWER)) {
                     _state = States.APPROACH_LINE_FAST_INNER;
                 }
                 break;
@@ -286,13 +289,13 @@ public class SuperK9Auto4 extends SuperK9Base {
                 }
                 break;
             case LEAVE_BEACON_FAST:
-                if(this.autoDriveDistance(INCHES_TO_LEAVE_BEACON, FAST_RUN_POWER)) {
+                if (this.autoDriveDistance(INCHES_TO_LEAVE_BEACON, FAST_RUN_POWER)) {
                     // if only leaving the beacon, stop here //
                     _state = _endBehavior == EndBehavior.LEAVE_BEACON? States.STOP: States.WAIT_FOR_MOUNTAIN;
                 }
                 break;
             case WAIT_FOR_MOUNTAIN:
-                if(this.autoWaitSeconds(MOUNTAIN_WAIT_SECONDS)) {
+                if (this.autoWaitSeconds(MOUNTAIN_WAIT_SECONDS)) {
                     _state = States.TURN_TO_MOUNTAIN;
                 }
                 break;
