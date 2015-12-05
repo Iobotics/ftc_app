@@ -57,7 +57,7 @@ public class SuperK9TeleOp extends SuperK9Base {
 
 	@Override
 	public void k9Init() {
-        this.calibrateGyro();
+        //this.calibrateGyro();
     }
 
 	/*
@@ -137,9 +137,9 @@ public class SuperK9TeleOp extends SuperK9Base {
 			this.setPowerScaled(left, right);
 		}
 
-        if(gamepad1.start & !this.isGyroCalibrating()) {
+        /*if(gamepad1.start & !this.isGyroCalibrating()) {
             this.resetGyroHeading();
-        }
+        }*/
 
 		telemetry.addData("lightOuter", this.getLightOuter());
 		telemetry.addData("lightInner", this.getLightInner());
