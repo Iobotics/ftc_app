@@ -64,8 +64,10 @@ public class FtcOpModeRegister implements OpModeRegister {
         manager.register("Auto:Blue (Solo)",   new SuperK9Auto4(SuperK9Base.FtcColor.BLUE, false, SuperK9Auto4.EndBehavior.DO_NOTHING));
         manager.register("Auto:Red (Solo)",    new SuperK9Auto4(SuperK9Base.FtcColor.RED,  false, SuperK9Auto4.EndBehavior.DO_NOTHING));
 
-        manager.register("Auto:Red (First)",   new SuperK9Auto4(SuperK9Base.FtcColor.RED,  false, SuperK9Auto4.EndBehavior.LEAVE_BEACON));
-        manager.register("Auto:Blue (First)",  new SuperK9Auto4(SuperK9Base.FtcColor.BLUE, false, SuperK9Auto4.EndBehavior.LEAVE_BEACON));
+        //manager.register("Auto:Red (First)",   new SuperK9Auto4(SuperK9Base.FtcColor.RED,  false, SuperK9Auto4.EndBehavior.LEAVE_BEACON));
+        //manager.register("Auto:Blue (First)",  new SuperK9Auto4(SuperK9Base.FtcColor.BLUE, false, SuperK9Auto4.EndBehavior.LEAVE_BEACON));
+        manager.register("Auto:Red (First)",   new SuperK9Auto4(SuperK9Base.FtcColor.RED,  false, SuperK9Auto4.EndBehavior.GO_TO_MOUNTAIN));
+        manager.register("Auto:Blue (First)",  new SuperK9Auto4(SuperK9Base.FtcColor.BLUE, false, SuperK9Auto4.EndBehavior.GO_TO_MOUNTAIN));
         manager.register("Auto:Red (Second)",  new SuperK9Auto4(SuperK9Base.FtcColor.RED,  true,  SuperK9Auto4.EndBehavior.DO_NOTHING));
         manager.register("Auto:Blue (Second)", new SuperK9Auto4(SuperK9Base.FtcColor.BLUE, true,  SuperK9Auto4.EndBehavior.DO_NOTHING));
 

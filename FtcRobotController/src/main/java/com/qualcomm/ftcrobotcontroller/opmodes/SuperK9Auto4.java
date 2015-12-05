@@ -40,28 +40,44 @@ package com.qualcomm.ftcrobotcontroller.opmodes;
  */
 public class SuperK9Auto4 extends SuperK9Base {
 
-    private static final double RUN_POWER      = 0.25; // Test 0.50 later
-    private static final double FAST_RUN_POWER = 0.75;
-    private static final double TURN_POWER     = 0.50;
-    private static final double ALIGN_POWER    = 0.10;
+    private static final double RUN_POWER       = 0.25; // Test 0.50 later
+    private static final double FAST_RUN_POWER  = 0.75;
+    private static final double GYRO_TURN_POWER = 0.25;
+    private static final double ALIGN_POWER     = 0.10;
 
-    private static final double PARTNER_WAIT_SECONDS = 15;
+    private static final double PARTNER_WAIT_SECONDS  = 15;
+    private static final double PLOW_WAIT_SECONDS     = 10;
+    private static final double LOWER_PLOW_SECONDS    = 1.5;
+    private static final double RESET_LIGHT_SECONDS   = 0.5;
+    private static final double MOUNTAIN_WAIT_SECONDS = 8.5;
 
-    private static final int INCHES_TO_APPROACH_FAST = 60;
+    private static final int INCHES_TO_LEAVE_WALL_OUTER = 10;
+    private static final int INCHES_TO_LEAVE_WALL_INNER = 7;
+    private static final int DEGREES_TO_TURN_OUTER = 43;
+    private static final int DEGREES_TO_TURN_INNER = 29;
+    private static final int INCHES_TO_APPROACH_FAST_OUTER = 72;
+    private static final int INCHES_TO_APPROACH_FAST_INNER = 50;
     private static final int INCHES_TO_CENTER = 4;
     private static final int INCHES_TO_BEACON = 5;
-    private static final int INCHES_TO_LEAVE_BEACON = 40;
-    private static final int INCHES_TO_TURN = -40;
-    private static final int INCHES_TO_MOUNTAIN = 20;
+    private static final int INCHES_TO_LEAVE_BEACON = 52;
+    private static final int INCHES_TO_MOUNTAIN = 50;
+    private static final int DEGREES_TO_MOUNTAIN = 55;
 
     private static final int SENSOR_OFFSET_8898 = 4;
 
     private enum States {
         START,
+        WAIT_FOR_CALIBRATE,
+        WAIT_FOR_LOWER_PLOW,
         LOWER_PLOW,
         RESET_LIGHT_SENSORS,
         WAIT_FOR_PARTNER,
-        APPROACH_LINE_FAST,
+        LEAVE_WALL_OUTER,
+        LEAVE_WALL_INNER,
+        TURN_FOR_APPROACH_OUTER,
+        TURN_FOR_APPROACH_INNER,
+        APPROACH_LINE_FAST_OUTER,
+        APPROACH_LINE_FAST_INNER,
         DRIVE_TO_LINE,
         WAIT_FOR_CENTER,
         CENTER_ON_LINE,
@@ -78,7 +94,8 @@ public class SuperK9Auto4 extends SuperK9Base {
         STOP_LOWER_DOZER,
         RESET_MAN_DROPPER2,
         LEAVE_BEACON_FAST,
-        TURN_IN_PLACE,
+        TURN_TO_MOUNTAIN,
+        WAIT_FOR_MOUNTAIN,
         DRIVE_TO_MOUNTAIN,
         STOP
     }
@@ -109,6 +126,7 @@ public class SuperK9Auto4 extends SuperK9Base {
     @Override
     protected void k9Init() {
         this.setManServoPosition(ManServoPosition.HOME);
+        this.calibrateGyro();
     }
 
     @Override
@@ -123,31 +141,68 @@ public class SuperK9Auto4 extends SuperK9Base {
         telemetry.addData("State", _state.name());
         switch(_state) {
             case START:
-                _state = States.LOWER_PLOW;
+                _state = this.isGyroCalibrating()? States.WAIT_FOR_CALIBRATE:
+                        _waitForPartner? States.WAIT_FOR_LOWER_PLOW: States.LOWER_PLOW;
+                break;
+            case WAIT_FOR_CALIBRATE:
+                if(!this.isGyroCalibrating()) {
+                    _state = _waitForPartner? States.WAIT_FOR_LOWER_PLOW: States.LOWER_PLOW;
+                }
+                break;
+            case WAIT_FOR_LOWER_PLOW:
+                if(this.autoWaitSeconds(PLOW_WAIT_SECONDS)) {
+                    _state = States.LOWER_PLOW;
+                }
                 break;
             case LOWER_PLOW:
                 this.setPlowPower(-1.0);
-                if(this.autoWaitSeconds(1.5)) {
+                if(this.autoWaitSeconds(LOWER_PLOW_SECONDS)) {
                     this.setPlowPower(0.0);
                     _state = States.RESET_LIGHT_SENSORS;
                 }
                 break;
             case RESET_LIGHT_SENSORS:
-                if(this.autoWaitSeconds(0.5)) {
+                if(this.autoWaitSeconds(RESET_LIGHT_SECONDS)) {
                     this.resetLightSensors();
                     // wait for partner or go immediately //
-                    _state = _waitForPartner? States.WAIT_FOR_PARTNER: States.APPROACH_LINE_FAST; //States.DRIVE_TO_LINE;
+                    _state = _waitForPartner? States.WAIT_FOR_PARTNER: States.LEAVE_WALL_OUTER;
                 }
                 break;
             case WAIT_FOR_PARTNER:
-                if(this.autoWaitSeconds(PARTNER_WAIT_SECONDS)) {
-                    _state = States.APPROACH_LINE_FAST; //States.DRIVE_TO_LINE;
+                if(this.autoWaitSeconds(PARTNER_WAIT_SECONDS - PLOW_WAIT_SECONDS - LOWER_PLOW_SECONDS - RESET_LIGHT_SECONDS)) {
+                    _state = States.LEAVE_WALL_INNER;
                 }
                 break;
-            case APPROACH_LINE_FAST:
-                if(this.autoDriveDistance(-INCHES_TO_APPROACH_FAST, FAST_RUN_POWER)) {
+            case LEAVE_WALL_OUTER:
+                if (this.autoDriveDistance(-INCHES_TO_LEAVE_WALL_OUTER, RUN_POWER)) {
+                    _state = States.TURN_FOR_APPROACH_OUTER;
+                }
+                break;
+            case TURN_FOR_APPROACH_OUTER:
+                if (this.autoTurnInPlaceGyro(_robotColor == FtcColor.RED ? DEGREES_TO_TURN_OUTER : -DEGREES_TO_TURN_OUTER, GYRO_TURN_POWER)) {
+                    _state = States.APPROACH_LINE_FAST_OUTER;
+                }
+                break;
+            case LEAVE_WALL_INNER:
+                if (this.autoDriveDistance(-INCHES_TO_LEAVE_WALL_INNER, RUN_POWER)) {
+                    _state = States.TURN_FOR_APPROACH_INNER;
+                }
+                break;
+            case TURN_FOR_APPROACH_INNER:
+                if (this.autoTurnInPlaceGyro(_robotColor == FtcColor.RED ? DEGREES_TO_TURN_INNER : -DEGREES_TO_TURN_INNER, GYRO_TURN_POWER)) {
+                    _state = States.APPROACH_LINE_FAST_INNER;
+                }
+                break;
+            case APPROACH_LINE_FAST_OUTER:
+                if (this.autoDriveDistance(-INCHES_TO_APPROACH_FAST_OUTER, FAST_RUN_POWER)) {
                     _state = States.DRIVE_TO_LINE;
                 }
+                break;
+            case APPROACH_LINE_FAST_INNER:
+                if(this.autoDriveDistance(-INCHES_TO_APPROACH_FAST_INNER, FAST_RUN_POWER)) {
+                    _state = States.DRIVE_TO_LINE;
+                }
+                break;
             case DRIVE_TO_LINE:
                 if(this.autoDriveToLine(-RUN_POWER)) {
                     _state = States.WAIT_FOR_CENTER;
@@ -198,7 +253,7 @@ public class SuperK9Auto4 extends SuperK9Base {
                 break;
             case DEPLOY_MAN_DROPPER:
                 this.setManServoPosition(ManServoPosition.DEPLOY);
-                if(this.autoWaitSeconds(2.0)) {
+                if(this.autoWaitSeconds(1.0)) {
                     // if lowering dozer, stop it now //
                     _state = _endBehavior != EndBehavior.DO_NOTHING? States.STOP_LOWER_DOZER: States.RESET_MAN_DROPPER;
                 }
@@ -225,17 +280,24 @@ public class SuperK9Auto4 extends SuperK9Base {
                 break;
             case RESET_MAN_DROPPER2:
                 this.setManServoPosition(ManServoPosition.HOME);
-                // if no end behavior, stop here //
-                _state = _endBehavior == EndBehavior.DO_NOTHING? States.STOP: States.LEAVE_BEACON_FAST;
+                if(this.autoWaitSeconds(1.0)) {
+                    // if no end behavior, stop here //
+                    _state = _endBehavior == EndBehavior.DO_NOTHING ? States.STOP : States.LEAVE_BEACON_FAST;
+                }
                 break;
             case LEAVE_BEACON_FAST:
                 if(this.autoDriveDistance(INCHES_TO_LEAVE_BEACON, FAST_RUN_POWER)) {
                     // if only leaving the beacon, stop here //
-                    _state = _endBehavior == EndBehavior.LEAVE_BEACON? States.STOP: States.TURN_IN_PLACE;
+                    _state = _endBehavior == EndBehavior.LEAVE_BEACON? States.STOP: States.WAIT_FOR_MOUNTAIN;
                 }
                 break;
-            case TURN_IN_PLACE:
-                if(this.autoTurnInPlace(_robotColor == FtcColor.RED? INCHES_TO_TURN: -INCHES_TO_TURN, TURN_POWER)) {
+            case WAIT_FOR_MOUNTAIN:
+                if(this.autoWaitSeconds(MOUNTAIN_WAIT_SECONDS)) {
+                    _state = States.TURN_TO_MOUNTAIN;
+                }
+                break;
+            case TURN_TO_MOUNTAIN:
+                if(this.autoTurnInPlaceGyro(_robotColor == FtcColor.RED? DEGREES_TO_MOUNTAIN: -DEGREES_TO_MOUNTAIN, GYRO_TURN_POWER)) {
                     _state = States.DRIVE_TO_MOUNTAIN;
                 }
                 break;
