@@ -42,12 +42,13 @@ public class SuperK9Auto4 extends SuperK9Base {
 
     private static final double RUN_POWER       = 0.25; // Test 0.50 later
     private static final double FAST_RUN_POWER  = 0.75;
-    private static final double GYRO_TURN_POWER = 0.25;
+    private static final double GYRO_TURN_POWER = 0.25; // 0.25 MAX! No low battery //
     private static final double ALIGN_POWER     = 0.10;
 
     private static final double PARTNER_WAIT_SECONDS  = 15;
     private static final double PLOW_WAIT_SECONDS     = 10;
     private static final double LOWER_PLOW_SECONDS    = 1.5;
+    private static final double RAISE_PLOW_SECONDS    = 1.5;
     private static final double RESET_LIGHT_SECONDS   = 0.5;
     private static final double MOUNTAIN_WAIT_SECONDS = 8.5;
 
@@ -59,9 +60,10 @@ public class SuperK9Auto4 extends SuperK9Base {
     private static final int INCHES_TO_APPROACH_FAST_INNER = 50;
     private static final int INCHES_TO_CENTER = 4;
     private static final int INCHES_TO_BEACON = 5;
-    private static final int INCHES_TO_LEAVE_BEACON = 52;
+    private static final int INCHES_TO_LEAVE_BEACON = 46;
     private static final int INCHES_TO_MOUNTAIN = 50;
-    private static final int DEGREES_TO_MOUNTAIN = 55;
+    private static final int DEGREES_TO_MOUNTAIN = 45;
+    private static final int INCHES_UP_MOUNTAIN = 20;
 
     private static final int SENSOR_OFFSET_8898 = 4;
     private static final int DEGREE_OFFSET_8898 = 0;
@@ -98,6 +100,8 @@ public class SuperK9Auto4 extends SuperK9Base {
         TURN_TO_MOUNTAIN,
         WAIT_FOR_MOUNTAIN,
         DRIVE_TO_MOUNTAIN,
+        RAISE_PLOW,
+        DRIVE_UP_MOUNTAIN,
         STOP
     }
 
@@ -300,12 +304,24 @@ public class SuperK9Auto4 extends SuperK9Base {
                 }
                 break;
             case TURN_TO_MOUNTAIN:
-                if(this.autoTurnInPlaceGyro(_robotColor == FtcColor.RED? DEGREES_TO_MOUNTAIN: -DEGREES_TO_MOUNTAIN, GYRO_TURN_POWER)) {
+                if (this.autoTurnInPlaceGyro(_robotColor == FtcColor.RED ? DEGREES_TO_MOUNTAIN : -DEGREES_TO_MOUNTAIN, GYRO_TURN_POWER)) {
                     _state = States.DRIVE_TO_MOUNTAIN;
                 }
                 break;
             case DRIVE_TO_MOUNTAIN:
                 if(this.autoDriveDistance(-INCHES_TO_MOUNTAIN, RUN_POWER)) {
+                    _state = States.RAISE_PLOW;
+                }
+                break;
+            case RAISE_PLOW:
+                this.setPlowPower(1.0);
+                if(this.autoWaitSeconds(RAISE_PLOW_SECONDS)) {
+                    this.setPlowPower(0.0);
+                    _state = States.DRIVE_UP_MOUNTAIN;
+                }
+                break;
+            case DRIVE_UP_MOUNTAIN:
+                if(this.autoDriveDistance(-INCHES_UP_MOUNTAIN, RUN_POWER)) {
                     _state = States.STOP;
                 }
                 break;
