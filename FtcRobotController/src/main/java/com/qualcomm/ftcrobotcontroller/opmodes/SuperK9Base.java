@@ -56,9 +56,9 @@ import com.qualcomm.robotcore.util.Range;
 public abstract class SuperK9Base extends OpMode {
 
     // dead reckoning information //
-	final static int    ENCODER_TICKS_PER_REV = 1120; // Neverest 40
-	final static int    WHEEL_DIAMETER        = 6;    // inches / REV
-	final static double INCHES_PER_TICK       = (WHEEL_DIAMETER * Math.PI) / ENCODER_TICKS_PER_REV;
+    final static int    ENCODER_TICKS_PER_REV = 1120; // Neverest 40
+    final static int    WHEEL_DIAMETER        = 6;    // inches / REV
+    final static double INCHES_PER_TICK       = (WHEEL_DIAMETER * Math.PI) / ENCODER_TICKS_PER_REV;
 
     // servo position information //
     final static double BUTTON_SERVO_POS_LEFT   = 0.34;
@@ -118,10 +118,10 @@ public abstract class SuperK9Base extends OpMode {
     final static double OUTER_LIGHT_THRESHOLD = 0.3;
 
     // hardware instances //
-	DcMotor _motorRightFront;
-	DcMotor _motorRightRear;
-	DcMotor _motorLeftFront;
-	DcMotor _motorLeftRear;
+    DcMotor _motorRightFront;
+    DcMotor _motorRightRear;
+    DcMotor _motorLeftFront;
+    DcMotor _motorLeftRear;
     DcMotor _winchMotor;
     DcMotor _launchMotor;
     DcMotor _plowMotor2;
@@ -134,10 +134,10 @@ public abstract class SuperK9Base extends OpMode {
     Servo _leftTrigger;
     Servo _rightTrigger;
 
-	DeviceInterfaceModule _cdim;
-	ColorSensor _sensorRGB;
+    DeviceInterfaceModule _cdim;
+    ColorSensor _sensorRGB;
     DigitalChannel _ledColorSensor;
-	LightSensor _lightInner;
+    LightSensor _lightInner;
     DigitalChannel _ledInnerRed, _ledInnerBlue;
     LightSensor _lightOuter;
     DigitalChannel _ledOuterRed, _ledOuterBlue;
@@ -158,13 +158,13 @@ public abstract class SuperK9Base extends OpMode {
     }
     private TeamNumber _teamNumber;
 
-	/*
-	 * Code to run when the op mode is initialized goes here
-	 *
-	 * @see com.qualcomm.robotcore.eventloop.opmode.OpMode#init()
-	 */
-	@Override
-	public void init() {
+    /*
+     * Code to run when the op mode is initialized goes here
+     *
+     * @see com.qualcomm.robotcore.eventloop.opmode.OpMode#init()
+     */
+    @Override
+    public void init() {
         // use "jumper" hardware to determine team number //
         try {
             hardwareMap.digitalChannel.get("robot_8741");
@@ -179,13 +179,13 @@ public abstract class SuperK9Base extends OpMode {
             }
         }
 
-		_motorRightFront = hardwareMap.dcMotor.get("rightFront");
-		_motorRightRear  = hardwareMap.dcMotor.get("rightRear");
-		_motorLeftFront = hardwareMap.dcMotor.get("leftFront");
-		_motorLeftRear = hardwareMap.dcMotor.get("leftRear");
+        _motorRightFront = hardwareMap.dcMotor.get("rightFront");
+        _motorRightRear  = hardwareMap.dcMotor.get("rightRear");
+        _motorLeftFront = hardwareMap.dcMotor.get("leftFront");
+        _motorLeftRear = hardwareMap.dcMotor.get("leftRear");
 
-		_motorRightFront.setDirection(DcMotor.Direction.REVERSE);
-		_motorRightRear.setDirection(DcMotor.Direction.REVERSE);
+        _motorRightFront.setDirection(DcMotor.Direction.REVERSE);
+        _motorRightRear.setDirection(DcMotor.Direction.REVERSE);
 
         _winchMotor = hardwareMap.dcMotor.get("winchMotor");
         if(_teamNumber == TeamNumber.TEAM_8898) {
@@ -199,13 +199,13 @@ public abstract class SuperK9Base extends OpMode {
         _launchMotor = hardwareMap.dcMotor.get("launchMotor");
         this.setLaunchReleasePower(0);
 
-		_cdim = hardwareMap.deviceInterfaceModule.get("dim");
-		_sensorRGB = hardwareMap.colorSensor.get("color");
+        _cdim = hardwareMap.deviceInterfaceModule.get("dim");
+        _sensorRGB = hardwareMap.colorSensor.get("color");
         _ledColorSensor = hardwareMap.digitalChannel.get("ledColor");
         _ledColorSensor.setMode(DigitalChannelController.Mode.OUTPUT);
-		this.setColorSensorLED(false);
+        this.setColorSensorLED(false);
 
-		_lightOuter = hardwareMap.lightSensor.get("lightOuter");
+        _lightOuter = hardwareMap.lightSensor.get("lightOuter");
         _ledOuterRed = hardwareMap.digitalChannel.get("ledOuterRed");
         _ledOuterRed.setMode(DigitalChannelController.Mode.OUTPUT);
         _ledOuterBlue = hardwareMap.digitalChannel.get("ledOuterBlue");
@@ -241,7 +241,7 @@ public abstract class SuperK9Base extends OpMode {
         _gyro = (ModernRoboticsI2cGyro) hardwareMap.gyroSensor.get("gyro");
         _gyro.setHeadingMode(ModernRoboticsI2cGyro.HeadingMode.HEADING_CARTESIAN);
         this.k9Init();
-	}
+    }
 
     @Override
     public void init_loop() {
@@ -272,12 +272,12 @@ public abstract class SuperK9Base extends OpMode {
         //this.launchMotorLoop();
         this.k9Loop();
 
-		/*
-		 * Send telemetry data back to driver station. Note that if we are using
-		 * a legacy NXT-compatible motor controller, then the getPower() method
-		 * will return a null value. The legacy NXT-compatible motor controllers
-		 * are currently write only.
-		 */
+        /*
+         * Send telemetry data back to driver station. Note that if we are using
+         * a legacy NXT-compatible motor controller, then the getPower() method
+         * will return a null value. The legacy NXT-compatible motor controllers
+         * are currently write only.
+         */
         telemetry.addData("Left encoder", String.format("%.2f", this.getLeftPositionInches()));
         telemetry.addData("Right encoder", String.format("%.2f", this.getRightPositionInches()));
         //telemetry.addData("Plow power", String.format("%.2f", this.getPlowPower()));
@@ -356,7 +356,7 @@ public abstract class SuperK9Base extends OpMode {
         this.setPower(leftMotorOutput, rightMotorOutput);
     }
 
-	protected void setPowerScaled(double leftPower, double rightPower) {
+    protected void setPowerScaled(double leftPower, double rightPower) {
 
         rightPower = Range.clip(rightPower, -1, 1);
         leftPower  = Range.clip(leftPower, -1, 1);
@@ -365,7 +365,7 @@ public abstract class SuperK9Base extends OpMode {
         leftPower =  scaleInput(leftPower);
 
         this.setPower(leftPower, rightPower);
-	}
+    }
 
     protected void setPower(double leftPower, double rightPower) {
         // write the values to the motors
@@ -590,27 +590,27 @@ public abstract class SuperK9Base extends OpMode {
         _motorRightRear.setMode(mode);
     }
 
-	private double scaleInput(double dVal)  {
-		double[] scaleArray = { 0.0, 0.05, 0.09, 0.10, 0.12, 0.15, 0.18, 0.24,
-				0.30, 0.36, 0.43, 0.50, 0.60, 0.72, 0.85, 1.00, 1.00 };
+    private double scaleInput(double dVal)  {
+        double[] scaleArray = { 0.0, 0.05, 0.09, 0.10, 0.12, 0.15, 0.18, 0.24,
+                0.30, 0.36, 0.43, 0.50, 0.60, 0.72, 0.85, 1.00, 1.00 };
 
-		// get the corresponding index for the scaleInput array.
-		int index = (int) (dVal * 16.0);
-		if (index < 0) {
-			index = -index;
-		} else if (index > 16) {
-			index = 16;
-		}
+        // get the corresponding index for the scaleInput array.
+        int index = (int) (dVal * 16.0);
+        if (index < 0) {
+            index = -index;
+        } else if (index > 16) {
+            index = 16;
+        }
 
-		double dScale;
-		if (dVal < 0) {
-			dScale = -scaleArray[index];
-		} else {
-			dScale = scaleArray[index];
-		}
+        double dScale;
+        if (dVal < 0) {
+            dScale = -scaleArray[index];
+        } else {
+            dScale = scaleArray[index];
+        }
 
-		return dScale;
-	}
+        return dScale;
+    }
 
     /**
      *  Auto Command inner state machine. Use these for actions that require continually testing

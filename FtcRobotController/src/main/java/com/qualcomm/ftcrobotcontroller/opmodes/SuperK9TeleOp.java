@@ -55,58 +55,58 @@ import java.lang.Math;
 public class SuperK9TeleOp extends SuperK9Base {
 
 
-	@Override
-	public void k9Init() {
+    @Override
+    public void k9Init() {
         //this.calibrateGyro();
     }
 
-	/*
-	 * Autonomous program
-	 *
-	 * Move forward 2 feet
-	 */
-	@Override
-	public void k9Start() {
-		this.setManServoPosition(ManServoPosition.HOME);
-		//this.runWithoutEncoders();
+    /*
+     * Autonomous program
+     *
+     * Move forward 2 feet
+     */
+    @Override
+    public void k9Start() {
+        this.setManServoPosition(ManServoPosition.HOME);
+        //this.runWithoutEncoders();
         this.runWithEncoders();
-		this.resetLightSensors();
-	}
+        this.resetLightSensors();
+    }
 
-	/*
-	 * This method will be called repeatedly in a loop
-	 *
-	 * @see com.qualcomm.robotcore.eventloop.opmode.OpMode#run()
-	 */
-	@Override
-	public void k9Loop() {
-		boolean disableDrive = false;
+    /*
+     * This method will be called repeatedly in a loop
+     *
+     * @see com.qualcomm.robotcore.eventloop.opmode.OpMode#run()
+     */
+    @Override
+    public void k9Loop() {
+        boolean disableDrive = false;
 
-		if(gamepad1.dpad_left) {
-			this.setLeftTriggerDeployed(true);
-			this.setRightTriggerDeployed(false);
-		} else if(gamepad1.dpad_right) {
-			this.setRightTriggerDeployed(true);
-			this.setLeftTriggerDeployed(false);
-		} else if(gamepad1.dpad_up){
-			this.setLeftTriggerDeployed(false);
-			this.setRightTriggerDeployed(false);
-		}
+        if(gamepad1.dpad_left) {
+            this.setLeftTriggerDeployed(true);
+            this.setRightTriggerDeployed(false);
+        } else if(gamepad1.dpad_right) {
+            this.setRightTriggerDeployed(true);
+            this.setLeftTriggerDeployed(false);
+        } else if(gamepad1.dpad_up){
+            this.setLeftTriggerDeployed(false);
+            this.setRightTriggerDeployed(false);
+        }
 
-		this.setPlowPower(gamepad1.left_bumper? 1 : gamepad1.left_trigger > 0.5 ? -1 : 0);
-		this.setDozerPower(gamepad1.right_bumper ? 1 : gamepad1.right_trigger > 0.5 ? -1 : 0);
+        this.setPlowPower(gamepad1.left_bumper? 1 : gamepad1.left_trigger > 0.5 ? -1 : 0);
+        this.setDozerPower(gamepad1.right_bumper ? 1 : gamepad1.right_trigger > 0.5 ? -1 : 0);
 
-		if(gamepad1.y) {
-			this.setManServoPosition(ManServoPosition.DEPLOY);
-		} else if(gamepad1.b || gamepad1.right_bumper){
-			this.setManServoPosition(ManServoPosition.HOME);
-		} else if(gamepad1.a) {
-			this.setManServoPosition(ManServoPosition.PARK);
-		}
+        if(gamepad1.y) {
+            this.setManServoPosition(ManServoPosition.DEPLOY);
+        } else if(gamepad1.b || gamepad1.right_bumper){
+            this.setManServoPosition(ManServoPosition.HOME);
+        } else if(gamepad1.a) {
+            this.setManServoPosition(ManServoPosition.PARK);
+        }
 
-		if(gamepad1.x) {
-			this.setWinchPower(1.0);
-		} else {
+        if(gamepad1.x) {
+            this.setWinchPower(1.0);
+        } else {
             this.setWinchPower(0.0);
         }
         if(gamepad1.right_stick_button && gamepad1.left_stick_button) {
@@ -114,36 +114,36 @@ public class SuperK9TeleOp extends SuperK9Base {
             if(this.getTeamNumber() != TeamNumber.TEAM_8898) {
                 this.setRightTriggerDeployed(true);
             }
-			this.setLaunchReleasePower(1.0);
+            this.setLaunchReleasePower(1.0);
             this.setDozerPower(0.25);
             // disable drive //
             disableDrive = true;
         } else if(gamepad1.start) {
             this.setLaunchReleasePower(-0.5);
         } else {
-			this.setLaunchReleasePower(0);
-		}
+            this.setLaunchReleasePower(0);
+        }
 
-		if(disableDrive) {
-			this.setPower(0, 0);
-		} else if(this.getTeamNumber() == TeamNumber.TEAM_8898) {
-			double power = -gamepad1.right_stick_y;
-			double turn  = -gamepad1.left_stick_x;
-			this.setPowerArcade(power, turn, true);
-		} else {
-			// tank drive //
-			float left = -gamepad1.left_stick_y;
-			float right = -gamepad1.right_stick_y;
-			this.setPowerScaled(left, right);
-		}
+        if(disableDrive) {
+            this.setPower(0, 0);
+        } else if(this.getTeamNumber() == TeamNumber.TEAM_8898) {
+            double power = -gamepad1.right_stick_y;
+            double turn  = -gamepad1.left_stick_x;
+            this.setPowerArcade(power, turn, true);
+        } else {
+            // tank drive //
+            float left = -gamepad1.left_stick_y;
+            float right = -gamepad1.right_stick_y;
+            this.setPowerScaled(left, right);
+        }
 
         /*if(gamepad1.start & !this.isGyroCalibrating()) {
             this.resetGyroHeading();
         }*/
 
-		telemetry.addData("lightOuter", this.getLightOuter());
-		telemetry.addData("lightInner", this.getLightInner());
-		//telemetry.addData("ods", String.format("%f, %d", _ods.getLightDetected(), _ods.getLightDetectedRaw()));
-		//telemetry.addData("analog", _analog.getValue());
-	}
+        telemetry.addData("lightOuter", this.getLightOuter());
+        telemetry.addData("lightInner", this.getLightInner());
+        //telemetry.addData("ods", String.format("%f, %d", _ods.getLightDetected(), _ods.getLightDetectedRaw()));
+        //telemetry.addData("analog", _analog.getValue());
+    }
 }
